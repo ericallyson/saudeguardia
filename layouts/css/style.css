@@ -1,0 +1,60 @@
+/* Definição de cores em tons pastéis */
+:root {
+    --beige: #F5F5DC;
+    --brown: #A0522D;
+    --light-gray: #D3D3D3;
+    --dark-gray: #A9A9A9;
+}
+
+body {
+    background-color: var(--beige);
+}
+
+.bg-gray-100 {
+    background-color: var(--beige) !important;
+}
+
+.bg-gray-200 {
+    background-color: #EAE7DC !important;
+}
+
+.bg-white {
+    background-color: #FFFAF0 !important;
+}
+
+.text-gray-700 {
+    color: var(--brown) !important;
+}
+
+.text-gray-500 {
+    color: var(--dark-gray) !important;
+}
+
+.border-gray-200 {
+    border-color: var(--light-gray) !important;
+}
+
+.shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.bg-indigo-600 {
+    background-color: var(--brown) !important;
+}
+
+.bg-indigo-700 {
+    background-color: #8B4513 !important;
+}
+
+.text-indigo-600 {
+    color: var(--brown) !important;
+}
+
+.text-indigo-900 {
+    color: #8B4513 !important;
+}
+
+.focus\:ring-indigo-500:focus {
+    --tw-ring-color: var(--brown) !important;
+}
+

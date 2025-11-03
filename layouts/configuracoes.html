@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Saúde Guardiã — Configurações (Premium)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bege:#f5efe6;
+      --bege-2:#f8f5f1;
+      --marrom:#4b3f36;
+      --marrom-2:#6b5b51;
+      --azul:#9fc5e8;
+      --azul-2:#dceaf7;
+      --borda:#e3d7c3;
+    }
+    body{ font-family:'Inter',sans-serif; background:linear-gradient(135deg,var(--bege-2),#e9f2f9); color:#3d3d3d; }
+    .card{ background:rgba(255,255,255,.92); border-radius:1rem; box-shadow:0 10px 24px rgba(0,0,0,.06); transition:transform .2s ease, box-shadow .3s ease; border:1px solid rgba(0,0,0,.03); }
+    .card:hover{ transform:translateY(-3px); box-shadow:0 14px 30px rgba(0,0,0,.10); }
+    .btn{ display:inline-flex; align-items:center; gap:.5rem; background:#2d3a4d; color:white; padding:.65rem 1rem; border-radius:.75rem; transition:transform .2s, opacity .2s; }
+    .btn:hover{ transform:translateY(-1px); opacity:.95; }
+    .btn-secondary{ background:var(--azul); color:#1b2432; }
+    .btn-danger{ background:#e57373; color:#402020; }
+    .btn-success{ background:#86d19a; color:#24422a; }
+    .sidebar-link{ display:flex; align-items:center; gap:.75rem; padding:.65rem 1rem; border-radius:.75rem; color:var(--marrom); }
+    .sidebar-link.active{ background:var(--azul-2); color:#2d3a4d; font-weight:600; }
+    .sidebar-link:hover{ background:#f2ebe0; }
+    .badge{ padding:.25rem .6rem; border-radius:999px; font-weight:600; font-size:.75rem; }
+    .badge-green{ background:#e6f4ea; color:#1e7a3a; }
+    .input, select, textarea{
+      background:white; border:1px solid var(--borda); border-radius:.75rem; padding:.6rem .8rem; width:100%;
+      transition: box-shadow .2s, border-color .2s;
+    }
+    .input:focus, select:focus, textarea:focus{ outline:none; box-shadow:0 0 0 3px rgba(159,197,232,.35); border-color:var(--azul); }
+    .section-title{ color:#2d3a4d }
+  </style>
+  <script>
+    tailwind.config = { theme:{ extend:{ colors:{ primary:'#9fc5e8', sand:'#f3ede1', cocoa:'#4b3f36' }}}}
+  </script>
+</head>
+
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-72 bg-gradient-to-b from-[#f3ede1] to-[#fdfbf7] border-r border-[var(--borda)] p-6 flex flex-col">
+      <h1 class="text-2xl font-bold text-[var(--marrom)] mb-6">Saúde Guardiã</h1>
+       <nav class="mt-6">
+                <a class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-200 hover:text-gray-700" href="index.html">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    <span class="mx-3">Dashboard</span>
+                </a>
+                <a class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-200 hover:text-gray-700" href="pacientes.html">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5.975 5.975 0 0112 13.489m0 0a5.975 5.975 0 015.403 2.316m0 0A7.47 7.47 0 0115 21"></path></svg>
+                    <span class="mx-3">Pacientes</span>
+                </a>
+                <a class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-200 hover:text-gray-700"  href="relatorios.html">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z"></path></svg>
+                    <span class="mx-3">Relatórios</span>
+                </a>
+               <a class="flex items-center px-6 py-2 mt-4 text-gray-700 bg-gray-200" href="configuracoes.html">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span class="mx-3">Configurações</span>
+                </a>
+            </nav>
+      <div class="mt-auto pt-6 text-xs text-[var(--marrom-2)] opacity-80">© 2025 Saúde Guardiã</div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-8">
+      <!-- Header -->
+      <header class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-semibold text-[#2d3a4d]">Configurações</h2>
+        <div class="flex items-center gap-3">
+          <img src="img/doctor.jpg" class="w-10 h-10 rounded-full border-2 border-[var(--azul)]" alt="avatar">
+          <span class="font-medium text-[var(--marrom)]">Dr. João</span>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Perfil do Médico -->
+        <section>
+          <h3 class="section-title text-2xl font-medium mb-6">Perfil do Médico</h3>
+          <div class="card p-6">
+            <form class="space-y-6">
+              <div class="grid grid-cols-1 gap-6">
+                <div>
+                  <label class="block text-sm font-medium text-[var(--marrom)]">Nome Completo</label>
+                  <input type="text" class="input mt-1" value="Dr. João Santos">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-[var(--marrom)]">Email</label>
+                  <input type="email" class="input mt-1" value="joao.santos@clinica.com">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-[var(--marrom)]">CRM</label>
+                  <input type="text" class="input mt-1" value="123456/SP">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-[var(--marrom)]">Especialidade</label>
+                  <input type="text" class="input mt-1" value="Cardiologia">
+                </div>
+              </div>
+              <div class="flex justify-end gap-3">
+                <a href="#" class="btn btn-secondary">Cancelar</a>
+                <button type="submit" class="btn">Salvar Alterações</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Integração WhatsApp -->
+        <section>
+          <h3 class="section-title text-2xl font-medium mb-6">Integração com WhatsApp</h3>
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-[var(--marrom)]">Status da Conexão</span>
+              <span class="badge badge-green">Conectado</span>
+            </div>
+            <p class="text-[var(--marrom-2)] mb-4">Configure a integração para enviar lembretes e receber atualizações dos seus pacientes.</p>
+
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-[var(--marrom)]">Número do WhatsApp Business</label>
+                <input type="tel" class="input mt-1" value="+55 11 99999-9999">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-[var(--marrom)]">Modelo de Mensagem Padrão</label>
+                <textarea rows="3" class="input mt-1">Olá {{nome}}! Lembre-se de {{meta}} hoje. Responda com ✅ quando completar.</textarea>
+              </div>
+            </div>
+
+            <div class="mt-6 flex gap-3">
+              <button class="btn btn-success">Reconectar</button>
+              <button class="btn btn-danger">Desconectar</button>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Notificações -->
+      <section class="mt-8">
+        <h3 class="section-title text-2xl font-medium mb-6">Configurações de Notificações</h3>
+        <div class="card p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 class="text-lg font-semibold text-[var(--marrom)] mb-4">Alertas do Sistema</h4>
+              <div class="space-y-3">
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" class="h-4 w-4 text-[var(--azul)] rounded border-[var(--borda)]" checked>
+                  <span class="text-sm text-[var(--marrom)]">Baixo engajamento de pacientes</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" class="h-4 w-4 text-[var(--azul)] rounded border-[var(--borda)]" checked>
+                  <span class="text-sm text-[var(--marrom)]">Metas não cumpridas</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" class="h-4 w-4 text-[var(--azul)] rounded border-[var(--borda)]" checked>
+                  <span class="text-sm text-[var(--marrom)]">Valores críticos de saúde</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <h4 class="text-lg font-semibold text-[var(--marrom)] mb-4">Relatórios Automáticos</h4>
+              <div class="space-y-3">
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" class="h-4 w-4 text-[var(--azul)] rounded border-[var(--borda)]" checked>
+                  <span class="text-sm text-[var(--marrom)]">Relatórios semanais</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" class="h-4 w-4 text-[var(--azul)] rounded border-[var(--borda)]">
+                  <span class="text-sm text-[var(--marrom)]">Relatórios mensais</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input type="checkbox" class="h-4 w-4 text-[var(--azul)] rounded border-[var(--borda)]" checked>
+                  <span class="text-sm text-[var(--marrom)]">Resumos executivos</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end">
+            <button class="btn">Salvar Configurações</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sistema -->
+      <section class="mt-8">
+        <h3 class="section-title text-2xl font-medium mb-6">Configurações do Sistema</h3>
+        <div class="card p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-[var(--marrom)]">Fuso Horário</label>
+              <select class="mt-1 select input">
+                <option value="America/Sao_Paulo" selected>Brasília (GMT-3)</option>
+                <option value="America/Manaus">Manaus (GMT-4)</option>
+                <option value="America/Rio_Branco">Rio Branco (GMT-5)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[var(--marrom)]">Idioma</label>
+              <select class="mt-1 select input">
+                <option value="pt-BR" selected>Português (Brasil)</option>
+                <option value="en-US">English (US)</option>
+                <option value="es-ES">Español</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[var(--marrom)]">Frequência de Backup</label>
+              <select class="mt-1 select input">
+                <option value="daily" selected>Diário</option>
+                <option value="weekly">Semanal</option>
+                <option value="monthly">Mensal</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-[var(--marrom)]">Retenção de Dados</label>
+              <select class="mt-1 select input">
+                <option value="1year">1 ano</option>
+                <option value="2years" selected>2 anos</option>
+                <option value="5years">5 anos</option>
+                <option value="indefinite">Indefinido</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end gap-3">
+            <a href="#" class="btn btn-secondary">Cancelar</a>
+            <button class="btn">Salvar Configurações</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

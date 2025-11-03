@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saúde Guardiã — Premium</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bege:#f5efe6;
+      --bege-2:#f8f5f1;
+      --marrom:#4b3f36;
+      --marrom-2:#6b5b51;
+      --azul:#9fc5e8;
+      --azul-2:#dceaf7;
+      --borda:#e3d7c3;
+    }
+    body{ font-family:'Inter',sans-serif; background:linear-gradient(135deg,var(--bege-2),#e9f2f9); color:#3d3d3d; }
+    .card{ background:rgba(255,255,255,.92); border-radius:1rem; box-shadow:0 10px 24px rgba(0,0,0,.06); transition:transform .2s ease, box-shadow .3s ease; border:1px solid rgba(0,0,0,.03); }
+    .card:hover{ transform:translateY(-3px); box-shadow:0 14px 30px rgba(0,0,0,.10); }
+    .btn{ display:inline-flex; align-items:center; gap:.5rem; background:#2d3a4d; color:white; padding:.65rem 1rem; border-radius:.75rem; transition:transform .2s, opacity .2s; }
+    .btn:hover{ transform:translateY(-1px); opacity:.95; }
+    .btn-secondary{ background:var(--azul); color:#1b2432; }
+    .badge{ padding:.25rem .6rem; border-radius:999px; font-weight:600; font-size:.75rem; }
+    .badge-green{ background:#e6f4ea; color:#1e7a3a; }
+    .badge-yellow{ background:#fff6d8; color:#8a6c00; }
+    .badge-red{ background:#fde8e8; color:#9b1c1c; }
+    .sidebar-link{ display:flex; align-items:center; gap:.75rem; padding:.65rem 1rem; border-radius:.75rem; color:var(--marrom); }
+    .sidebar-link.active{ background:var(--azul-2); color:#2d3a4d; font-weight:600; }
+    .sidebar-link:hover{ background:#f2ebe0; }
+    .table th{ font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color:#6b7280; background:#fafafa; }
+    .table td{ color:#2f2f2f; }
+  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { primary:'#9fc5e8', sand:'#f3ede1', cocoa:'#4b3f36' }
+        }
+      }
+    }
+  </script>
+
+</head>
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-72 bg-gradient-to-b from-[#f3ede1] to-[#fdfbf7] border-r border-[var(--borda)] p-6 flex flex-col">
+        <img src="img/logo-horizontal.png?a=1" alt="Saúde Guardiã" class="w-auto">
+      <nav class="mt-6">
+                <a class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-200 hover:text-gray-700" href="index.html">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    <span class="mx-3">Dashboard</span>
+                </a>
+                <a class="flex items-center px-6 py-2 mt-4 text-gray-700 bg-gray-200" href="pacientes.html">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5.975 5.975 0 0112 13.489m0 0a5.975 5.975 0 015.403 2.316m0 0A7.47 7.47 0 0115 21"></path></svg>
+                    <span class="mx-3">Pacientes</span>
+                </a>
+                <a class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-200 hover:text-gray-700" href="relatorios.html">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z"></path></svg>
+                    <span class="mx-3">Relatórios</span>
+                </a>
+               <a class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-200 hover:text-gray-700" href="configuracoes.html">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span class="mx-3">Configurações</span>
+                </a>
+            </nav>
+      <div class="mt-auto pt-6 text-xs text-[var(--marrom-2)] opacity-80">
+        © 2025 Saúde Guardiã
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-8">
+      <header class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-semibold text-[#2d3a4d]">Painel</h2>
+        <div class="flex items-center gap-3">
+          <img src="img/doctor.jpg" class="w-10 h-10 rounded-full border-2 border-[var(--azul)]" alt="avatar">
+          <span class="font-medium text-[var(--marrom)]">Dr. João</span>
+        </div>
+      </header>
+
+      
+  <section class="flex justify-between items-center mb-6">
+    <h3 class="text-2xl font-semibold text-[#2d3a4d]">Pacientes</h3>
+    <a href="novo-paciente.html" class="btn btn-secondary">＋ Novo Paciente</a>
+  </section>
+
+  <section class="card p-6">
+    <div class="overflow-x-auto rounded-lg border border-[var(--borda)]">
+      <table class="min-w-full table">
+        <thead>
+          <tr>
+            <th class="px-6 py-3 text-left">Paciente</th>
+            <th class="px-6 py-3 text-left">Plano</th>
+            <th class="px-6 py-3 text-left">Desde</th>
+            <th class="px-6 py-3 text-left">Status</th>
+            <th class="px-6 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="bg-white">
+          
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+    </main>
+  </div>
+</body>
+</html>
