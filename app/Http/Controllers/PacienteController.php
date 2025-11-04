@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Meta;
 use App\Models\Paciente;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class PacienteController extends Controller
 {
@@ -24,7 +27,9 @@ class PacienteController extends Controller
      */
     public function create(): View
     {
-        return view('pacientes.create');
+        $metas = Meta::orderBy('nome')->get();
+
+        return view('pacientes.create', compact('metas'));
     }
 
     /**
@@ -33,8 +38,11 @@ class PacienteController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validatePaciente($request);
+        $metas = $this->validatePacienteMetas($request);
 
-        Paciente::create($data);
+        $paciente = Paciente::create($data);
+
+        $this->syncPacienteMetas($paciente, $metas);
 
         return redirect()->route('pacientes.index')->with('success', 'Paciente cadastrado com sucesso.');
     }
@@ -44,7 +52,10 @@ class PacienteController extends Controller
      */
     public function edit(Paciente $paciente): View
     {
-        return view('pacientes.edit', compact('paciente'));
+        $paciente->load('metas');
+        $metas = Meta::orderBy('nome')->get();
+
+        return view('pacientes.edit', compact('paciente', 'metas'));
     }
 
     /**
@@ -53,8 +64,10 @@ class PacienteController extends Controller
     public function update(Request $request, Paciente $paciente): RedirectResponse
     {
         $data = $this->validatePaciente($request);
+        $metas = $this->validatePacienteMetas($request);
 
         $paciente->update($data);
+        $this->syncPacienteMetas($paciente, $metas);
 
         return redirect()->route('pacientes.index')->with('success', 'Paciente atualizado com sucesso.');
     }
@@ -92,5 +105,57 @@ class PacienteController extends Controller
             'whatsapp_numero' => ['nullable', 'string', 'max:30'],
             'whatsapp_frequencia' => ['nullable', 'string', 'max:50'],
         ]);
+    }
+
+    protected function validatePacienteMetas(Request $request): array
+    {
+        $metasRequest = $request->input('metas', []);
+        $metasDisponiveis = Meta::pluck('id')->all();
+        $periodicidadesValidas = array_keys(Meta::PERIODICIDADES);
+
+        $metasValidadas = [];
+
+        foreach ($metasRequest as $metaId => $metaDados) {
+            if (!in_array((int) $metaId, $metasDisponiveis, true)) {
+                continue;
+            }
+
+            $selecionada = filter_var($metaDados['selected'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+            if (! $selecionada) {
+                continue;
+            }
+
+            $validator = Validator::make($metaDados, [
+                'periodicidade' => ['required', Rule::in($periodicidadesValidas)],
+                'vencimento' => ['nullable', 'date'],
+            ], [], [
+                'periodicidade' => 'periodicidade da meta',
+                'vencimento' => 'vencimento da meta',
+            ]);
+
+            $dadosValidados = $validator->validate();
+
+            $metasValidadas[(int) $metaId] = [
+                'periodicidade' => $dadosValidados['periodicidade'],
+                'vencimento' => $dadosValidados['vencimento'] ?? null,
+            ];
+        }
+
+        return $metasValidadas;
+    }
+
+    protected function syncPacienteMetas(Paciente $paciente, array $metas): void
+    {
+        $syncData = [];
+
+        foreach ($metas as $metaId => $metaDados) {
+            $syncData[$metaId] = [
+                'periodicidade' => $metaDados['periodicidade'],
+                'vencimento' => $metaDados['vencimento'] ?: null,
+            ];
+        }
+
+        $paciente->metas()->sync($syncData);
     }
 }
