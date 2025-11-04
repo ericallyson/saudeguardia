@@ -20,6 +20,7 @@ class Meta extends Model
         'boolean' => 'Sim/Não',
         'integer' => 'Número inteiro',
         'scale' => 'Escala de 1 a 5',
+        'texto' => 'Texto',
     ];
 
     public const PERIODICIDADES = [
