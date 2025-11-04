@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Paciente extends Model
 {
@@ -35,4 +36,11 @@ class Paciente extends Model
         'circunferencia_abdominal' => 'decimal:2',
         'peso_meta' => 'decimal:2',
     ];
+
+    public function metas(): BelongsToMany
+    {
+        return $this->belongsToMany(Meta::class, 'meta_paciente')
+            ->withPivot(['periodicidade', 'vencimento'])
+            ->withTimestamps();
+    }
 }

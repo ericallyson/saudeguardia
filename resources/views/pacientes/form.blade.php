@@ -3,6 +3,9 @@
 @php
     /** @var \App\Models\Paciente|null $paciente */
     $paciente = $paciente ?? new \App\Models\Paciente();
+    $metas = collect($metas ?? []);
+    $pacienteMetas = ($paciente->relationLoaded('metas') ? $paciente->metas : ($paciente->metas ?? collect()))->keyBy('id');
+    $periodicidadesDisponiveis = \App\Models\Meta::PERIODICIDADES;
 @endphp
 
 <div class="space-y-8">
@@ -218,6 +221,89 @@
             @error('atividade_fisica')
                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
             @enderror
+        </div>
+
+        <div class="mt-8">
+            <h3 class="text-md font-semibold text-gray-800 mb-4">Metas cadastradas</h3>
+
+            @if ($metas->isEmpty())
+                <p class="text-sm text-gray-500">Nenhuma meta cadastrada no sistema.</p>
+            @else
+                <div class="space-y-4">
+                    @foreach ($metas as $meta)
+                        @php
+                            $metaOld = old('metas.' . $meta->id, []);
+                            $metaPaciente = $pacienteMetas->get($meta->id);
+                            $metaSelecionada = isset($metaOld['selected'])
+                                ? (bool) $metaOld['selected']
+                                : ($metaPaciente !== null);
+                            $periodicidadeSelecionada = $metaOld['periodicidade']
+                                ?? ($metaPaciente ? $metaPaciente->pivot->periodicidade : ($meta->periodicidade_padrao ?? ''));
+                            $vencimentoSelecionado = $metaOld['vencimento']
+                                ?? ($metaPaciente ? ($metaPaciente->pivot->vencimento ?? '') : '');
+                        @endphp
+                        <div class="border border-[#e3d7c3] rounded-lg p-4 bg-white/60">
+                            <div class="flex items-start gap-3">
+                                <div class="pt-1">
+                                    <input
+                                        type="checkbox"
+                                        id="meta-{{ $meta->id }}"
+                                        name="metas[{{ $meta->id }}][selected]"
+                                        value="1"
+                                        @checked($metaSelecionada)
+                                    >
+                                </div>
+                                <div class="flex-1 space-y-4">
+                                    <div class="flex flex-col">
+                                        <label for="meta-{{ $meta->id }}" class="text-sm font-semibold text-gray-800">
+                                            {{ $meta->nome }}
+                                        </label>
+                                        @if ($meta->descricao)
+                                            <p class="text-sm text-gray-500">{{ $meta->descricao }}</p>
+                                        @endif
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="meta-periodicidade-{{ $meta->id }}" class="block text-sm font-medium text-gray-700">
+                                                Periodicidade
+                                            </label>
+                                            <select
+                                                id="meta-periodicidade-{{ $meta->id }}"
+                                                name="metas[{{ $meta->id }}][periodicidade]"
+                                                class="mt-1 block w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+                                            >
+                                                <option value="">Selecione</option>
+                                                @foreach ($periodicidadesDisponiveis as $valor => $label)
+                                                    <option value="{{ $valor }}" @selected($periodicidadeSelecionada === $valor)>{{ $label }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('metas.' . $meta->id . '.periodicidade')
+                                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                        <div>
+                                            <label for="meta-vencimento-{{ $meta->id }}" class="block text-sm font-medium text-gray-700">
+                                                Vencimento
+                                            </label>
+                                            <input
+                                                type="date"
+                                                id="meta-vencimento-{{ $meta->id }}"
+                                                name="metas[{{ $meta->id }}][vencimento]"
+                                                value="{{ $vencimentoSelecionado }}"
+                                                class="mt-1 block w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+                                            >
+                                            @error('metas.' . $meta->id . '.vencimento')
+                                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </div>
 

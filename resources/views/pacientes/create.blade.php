@@ -10,7 +10,7 @@
         </div>
 
         <form action="{{ route('pacientes.store') }}" method="POST" class="space-y-8">
-            @include('pacientes.form', ['paciente' => null])
+            @include('pacientes.form', ['paciente' => null, 'metas' => $metas ?? collect()])
         </form>
     </div>
 @endsection
