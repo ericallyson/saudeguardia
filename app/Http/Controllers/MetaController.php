@@ -25,8 +25,9 @@ class MetaController extends Controller
     public function create(): View
     {
         $tipos = Meta::TIPOS;
+        $periodicidades = Meta::PERIODICIDADES;
 
-        return view('metas.create', compact('tipos'));
+        return view('metas.create', compact('tipos', 'periodicidades'));
     }
 
     /**
@@ -47,8 +48,9 @@ class MetaController extends Controller
     public function edit(Meta $meta): View
     {
         $tipos = Meta::TIPOS;
+        $periodicidades = Meta::PERIODICIDADES;
 
-        return view('metas.edit', compact('meta', 'tipos'));
+        return view('metas.edit', compact('meta', 'tipos', 'periodicidades'));
     }
 
     /**
@@ -82,7 +84,7 @@ class MetaController extends Controller
             'nome' => ['required', 'string', 'max:255'],
             'descricao' => ['nullable', 'string'],
             'tipo' => ['required', 'in:' . implode(',', array_keys(Meta::TIPOS))],
-            'periodicidade_padrao' => ['required', 'string', 'max:255'],
+            'periodicidade_padrao' => ['required', 'in:' . implode(',', array_keys(Meta::PERIODICIDADES))],
         ]);
     }
 }

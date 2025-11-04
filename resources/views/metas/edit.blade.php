@@ -12,7 +12,7 @@
         <div class="card p-6">
             <form action="{{ route('metas.update', $meta) }}" method="POST">
                 @method('PUT')
-                @include('metas.form', ['meta' => $meta])
+                @include('metas.form', ['meta' => $meta, 'periodicidades' => $periodicidades])
             </form>
         </div>
     </div>

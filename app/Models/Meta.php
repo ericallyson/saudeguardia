@@ -21,4 +21,11 @@ class Meta extends Model
         'integer' => 'Número inteiro',
         'scale' => 'Escala de 1 a 5',
     ];
+
+    public const PERIODICIDADES = [
+        'diario' => 'Diário',
+        'semanal' => 'Semanal',
+        'quinzenal' => 'Quinzenal',
+        'dia_sim_dia_nao' => 'Dia sim, dia não',
+    ];
 }

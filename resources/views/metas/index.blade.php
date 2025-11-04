@@ -39,7 +39,7 @@
                         <tr>
                             <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{{ $meta->nome }}</td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ \App\Models\Meta::TIPOS[$meta->tipo] ?? $meta->tipo }}</td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $meta->periodicidade_padrao ?? '—' }}</td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $meta->periodicidade_padrao ? (\App\Models\Meta::PERIODICIDADES[$meta->periodicidade_padrao] ?? $meta->periodicidade_padrao) : '—' }}</td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $meta->updated_at?->format('d/m/Y H:i') }}</td>
                             <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                 <a href="{{ route('metas.edit', $meta) }}" class="text-blue-600 hover:text-blue-900">Editar</a>
