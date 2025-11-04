@@ -11,7 +11,7 @@
 
         <div class="card p-6">
             <form action="{{ route('metas.store') }}" method="POST">
-                @include('metas.form', ['meta' => null])
+                @include('metas.form', ['meta' => null, 'periodicidades' => $periodicidades])
             </form>
         </div>
     </div>

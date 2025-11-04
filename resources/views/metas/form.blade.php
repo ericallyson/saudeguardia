@@ -1,5 +1,7 @@
 @csrf
 
+@php($periodicidades = $periodicidades ?? \App\Models\Meta::PERIODICIDADES)
+
 <div class="grid grid-cols-1 gap-6">
     <div>
         <label for="nome" class="block text-sm font-medium text-gray-700">Nome da Meta</label>
@@ -48,15 +50,17 @@
 
     <div>
         <label for="periodicidade_padrao" class="block text-sm font-medium text-gray-700">Periodicidade padrão</label>
-        <input
-            type="text"
+        <select
             id="periodicidade_padrao"
             name="periodicidade_padrao"
-            value="{{ old('periodicidade_padrao', $meta->periodicidade_padrao ?? '') }}"
-            placeholder="Ex.: Diário, Semanal, Mensal"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
             required
         >
+            <option value="">Selecione uma periodicidade</option>
+            @foreach($periodicidades as $valor => $label)
+                <option value="{{ $valor }}" @selected(old('periodicidade_padrao', $meta->periodicidade_padrao ?? '') === $valor)>{{ $label }}</option>
+            @endforeach
+        </select>
         @error('periodicidade_padrao')
             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
         @enderror
