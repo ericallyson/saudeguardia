@@ -82,6 +82,7 @@ class MetaController extends Controller
             'nome' => ['required', 'string', 'max:255'],
             'descricao' => ['nullable', 'string'],
             'tipo' => ['required', 'in:' . implode(',', array_keys(Meta::TIPOS))],
+            'periodicidade_padrao' => ['required', 'string', 'max:255'],
         ]);
     }
 }

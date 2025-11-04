@@ -13,6 +13,7 @@ class Meta extends Model
         'nome',
         'descricao',
         'tipo',
+        'periodicidade_padrao',
     ];
 
     public const TIPOS = [
