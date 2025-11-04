@@ -45,6 +45,22 @@
             <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
         @enderror
     </div>
+
+    <div>
+        <label for="periodicidade_padrao" class="block text-sm font-medium text-gray-700">Periodicidade padrão</label>
+        <input
+            type="text"
+            id="periodicidade_padrao"
+            name="periodicidade_padrao"
+            value="{{ old('periodicidade_padrao', $meta->periodicidade_padrao ?? '') }}"
+            placeholder="Ex.: Diário, Semanal, Mensal"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            required
+        >
+        @error('periodicidade_padrao')
+            <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+        @enderror
+    </div>
 </div>
 
 <div class="mt-6 flex justify-end space-x-3">

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\MetaController;
+use App\Http\Controllers\PacienteController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -19,4 +20,5 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::resource('metas', MetaController::class)->except('show');
+    Route::resource('pacientes', PacienteController::class)->except('show');
 });

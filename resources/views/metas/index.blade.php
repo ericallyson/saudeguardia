@@ -29,6 +29,7 @@
                     <tr>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Nome</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Tipo</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Periodicidade padrão</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">Última atualização</th>
                         <th scope="col" class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">Ações</th>
                     </tr>
@@ -38,6 +39,7 @@
                         <tr>
                             <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">{{ $meta->nome }}</td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ \App\Models\Meta::TIPOS[$meta->tipo] ?? $meta->tipo }}</td>
+                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $meta->periodicidade_padrao ?? '—' }}</td>
                             <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">{{ $meta->updated_at?->format('d/m/Y H:i') }}</td>
                             <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                 <a href="{{ route('metas.edit', $meta) }}" class="text-blue-600 hover:text-blue-900">Editar</a>
@@ -50,7 +52,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">Nenhuma meta cadastrada ainda.</td>
+                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Nenhuma meta cadastrada ainda.</td>
                         </tr>
                     @endforelse
                 </tbody>
