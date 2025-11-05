@@ -2,10 +2,14 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\MetaController;
+use App\Http\Controllers\MetaResponseController;
 use App\Http\Controllers\PacienteController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
+
+Route::get('/metas/responder/{token}', [MetaResponseController::class, 'show'])->name('metas.responder');
+Route::post('/metas/responder/{token}', [MetaResponseController::class, 'store'])->name('metas.responder.store');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

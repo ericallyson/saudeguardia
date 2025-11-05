@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Meta extends Model
 {
@@ -36,5 +37,15 @@ class Meta extends Model
         return $this->belongsToMany(Paciente::class, 'meta_paciente')
             ->withPivot(['periodicidade', 'vencimento'])
             ->withTimestamps();
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(MetaMessage::class);
+    }
+
+    public function respostas(): HasMany
+    {
+        return $this->hasMany(MetaResposta::class);
     }
 }
