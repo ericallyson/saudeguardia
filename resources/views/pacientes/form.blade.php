@@ -242,7 +242,7 @@
                             $vencimentoSelecionado = $metaOld['vencimento']
                                 ?? ($metaPaciente ? ($metaPaciente->pivot->vencimento ?? '') : '');
                         @endphp
-                        <div class="border border-[#e3d7c3] rounded-lg p-4 bg-white/60">
+                        <div class="border border-[#e3d7c3] rounded-lg p-4 bg-white/60" data-meta-card="meta-{{ $meta->id }}">
                             <div class="flex items-start gap-3">
                                 <div class="pt-1">
                                     <input
@@ -366,3 +366,32 @@
         Salvar paciente
     </button>
 </div>
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('[data-meta-card]').forEach((card) => {
+                const checkbox = card.querySelector('input[type="checkbox"]');
+                const periodicidade = card.querySelector('select');
+                const vencimento = card.querySelector('input[type="date"]');
+
+                const updateState = () => {
+                    const ativa = checkbox.checked;
+
+                    periodicidade.disabled = !ativa;
+                    periodicidade.required = ativa;
+
+                    vencimento.disabled = !ativa;
+                    vencimento.required = ativa;
+
+                    if (!ativa) {
+                        vencimento.value = '';
+                    }
+                };
+
+                updateState();
+                checkbox.addEventListener('change', updateState);
+            });
+        });
+    </script>
+@endpush

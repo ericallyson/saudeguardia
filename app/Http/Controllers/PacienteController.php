@@ -128,7 +128,7 @@ class PacienteController extends Controller
 
             $validator = Validator::make($metaDados, [
                 'periodicidade' => ['required', Rule::in($periodicidadesValidas)],
-                'vencimento' => ['nullable', 'date'],
+                'vencimento' => ['required', 'date'],
             ], [], [
                 'periodicidade' => 'periodicidade da meta',
                 'vencimento' => 'vencimento da meta',
