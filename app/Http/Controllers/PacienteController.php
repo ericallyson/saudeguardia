@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Meta;
 use App\Models\Paciente;
+use App\Services\MetaMessageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,6 +13,10 @@ use Illuminate\Validation\Rule;
 
 class PacienteController extends Controller
 {
+    public function __construct(private readonly MetaMessageService $metaMessageService)
+    {
+    }
+
     /**
      * Display a listing of the patients.
      */
@@ -43,6 +48,7 @@ class PacienteController extends Controller
         $paciente = Paciente::create($data);
 
         $this->syncPacienteMetas($paciente, $metas);
+        $this->metaMessageService->rebuildForPaciente($paciente);
 
         return redirect()->route('pacientes.index')->with('success', 'Paciente cadastrado com sucesso.');
     }
@@ -68,6 +74,7 @@ class PacienteController extends Controller
 
         $paciente->update($data);
         $this->syncPacienteMetas($paciente, $metas);
+        $this->metaMessageService->rebuildForPaciente($paciente);
 
         return redirect()->route('pacientes.index')->with('success', 'Paciente atualizado com sucesso.');
     }
