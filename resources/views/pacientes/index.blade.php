@@ -70,12 +70,20 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-right text-sm">
-                                <a href="{{ route('pacientes.edit', $paciente) }}" class="text-blue-600 hover:text-blue-900">Editar</a>
-                                <form action="{{ route('pacientes.destroy', $paciente) }}" method="POST" class="inline-block ml-3" onsubmit="return confirm('Tem certeza que deseja remover este paciente?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800">Excluir</button>
-                                </form>
+                                <div class="flex items-center justify-end gap-4">
+                                    <a
+                                        href="{{ route('pacientes.dashboard', $paciente) }}"
+                                        class="inline-flex items-center text-indigo-600 hover:text-indigo-800"
+                                    >
+                                        Dashboard do paciente
+                                    </a>
+                                    <a href="{{ route('pacientes.edit', $paciente) }}" class="text-blue-600 hover:text-blue-900">Editar</a>
+                                    <form action="{{ route('pacientes.destroy', $paciente) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja remover este paciente?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-800">Excluir</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
