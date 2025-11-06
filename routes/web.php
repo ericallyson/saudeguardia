@@ -5,6 +5,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MetaController;
 use App\Http\Controllers\MetaResponseController;
 use App\Http\Controllers\PacienteController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\Webhooks\WhatsappWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/login');
@@ -17,6 +19,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
 });
 
+Route::post('/webhooks/whatsapp', WhatsappWebhookController::class)->name('webhooks.whatsapp');
+
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -26,4 +30,8 @@ Route::middleware('auth')->group(function () {
     Route::get('pacientes/{paciente}/dashboard', [PacienteController::class, 'dashboard'])
         ->name('pacientes.dashboard');
     Route::resource('pacientes', PacienteController::class)->except('show');
+
+    Route::get('configuracoes', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('configuracoes/instancia', [SettingsController::class, 'createInstance'])->name('settings.instance.create');
+    Route::get('configuracoes/instancia/status', [SettingsController::class, 'instanceStatus'])->name('settings.instance.status');
 });
