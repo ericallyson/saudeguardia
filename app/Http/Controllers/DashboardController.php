@@ -1,13 +1,13 @@
 <?php
 
-namespace App\\Http\\Controllers;
+namespace App\Http\Controllers;
 
-use App\\Models\\MetaMessage;
-use App\\Models\\MetaResposta;
-use App\\Models\\Paciente;
-use Illuminate\\Support\\Carbon;
-use Illuminate\\Support\\Collection;
-use Illuminate\\View\\View;
+use App\Models\MetaMessage;
+use App\Models\MetaResposta;
+use App\Models\Paciente;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
