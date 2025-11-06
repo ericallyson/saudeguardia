@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MetaMessage;
 use App\Models\MetaResposta;
-use App\Models\Paciente;
+use App\Services\PacienteDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -13,6 +13,10 @@ use Illuminate\View\View;
 
 class MetaResponseController extends Controller
 {
+    public function __construct(private readonly PacienteDashboardService $dashboardService)
+    {
+    }
+
     public function show(string $token): View
     {
         $message = MetaMessage::with(['meta', 'paciente', 'resposta'])
@@ -22,7 +26,7 @@ class MetaResponseController extends Controller
         $paciente = $message->paciente;
         $meta = $message->meta;
         $showChart = $message->status === 'respondido';
-        $engajamento = $showChart ? $this->calcularEngajamento($paciente) : null;
+        $engajamento = $showChart ? $this->dashboardService->calcularEngajamento($paciente) : null;
 
         return view('metas.responder', [
             'metaMessage' => $message,
@@ -66,7 +70,7 @@ class MetaResponseController extends Controller
         $message->load(['paciente', 'meta']);
         $paciente = $message->paciente;
 
-        $engajamento = $this->calcularEngajamento($paciente);
+        $engajamento = $this->dashboardService->calcularEngajamento($paciente);
 
         return view('metas.responder', [
             'metaMessage' => $message,
@@ -95,28 +99,4 @@ class MetaResponseController extends Controller
         };
     }
 
-    private function calcularEngajamento(Paciente $paciente): array
-    {
-        $totalInteracoes = $paciente->metaMessages()->count();
-        $interacoesConcluidas = $paciente->metaRespostas()->count();
-        $previstasAteHoje = $paciente->metaMessages()
-            ->where('data_envio', '<=', Carbon::now())
-            ->count();
-
-        $percentualTotal = $totalInteracoes > 0
-            ? round(($interacoesConcluidas / $totalInteracoes) * 100, 2)
-            : 0;
-
-        $percentualPrevisto = $previstasAteHoje > 0
-            ? round(min(100, ($interacoesConcluidas / $previstasAteHoje) * 100), 2)
-            : 0;
-
-        return [
-            'total_interacoes' => $totalInteracoes,
-            'interacoes_concluidas' => $interacoesConcluidas,
-            'previstas_ate_hoje' => $previstasAteHoje,
-            'percentual_total' => $percentualTotal,
-            'percentual_previsto' => $percentualPrevisto,
-        ];
-    }
 }
