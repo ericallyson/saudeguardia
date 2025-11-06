@@ -19,6 +19,8 @@ class MetaMessageService
         'dia_sim_dia_nao' => 2,
     ];
 
+    private const DEFAULT_TIME = '09:00';
+
     public function rebuildForAllPacientes(): void
     {
         Paciente::query()
@@ -60,6 +62,7 @@ class MetaMessageService
                         'token' => Str::uuid()->toString(),
                         'data_envio' => $dataEnvio,
                         'status' => 'pendente',
+                        'enviado_em' => null,
                     ]);
                 }
             }
@@ -73,7 +76,7 @@ class MetaMessageService
             : Carbon::now();
 
         $inicio = $inicio->isPast() ? Carbon::now() : $inicio;
-        $inicio = $inicio->startOfDay();
+        $inicio = $inicio->startOfDay()->setTimeFromTimeString($this->resolveHorario($meta));
 
         $vencimento = $meta->pivot?->vencimento
             ? Carbon::parse($meta->pivot->vencimento)->endOfDay()
@@ -99,6 +102,27 @@ class MetaMessageService
         }
 
         return $datas;
+    }
+
+    private function resolveHorario(Meta $meta): string
+    {
+        $horario = $meta->pivot?->horario;
+
+        if (! is_string($horario) || $horario === '') {
+            return self::DEFAULT_TIME;
+        }
+
+        $normalized = substr($horario, 0, 5);
+
+        if (preg_match('/^\d{2}:\d{2}$/', $normalized) === 1) {
+            return $normalized;
+        }
+
+        if (preg_match('/^\d{2}:\d{2}$/', $horario) === 1) {
+            return $horario;
+        }
+
+        return self::DEFAULT_TIME;
     }
 
     private function formatPhoneNumber(Paciente $paciente): ?string

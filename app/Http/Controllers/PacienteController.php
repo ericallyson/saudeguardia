@@ -156,9 +156,11 @@ class PacienteController extends Controller
             $validator = Validator::make($metaDados, [
                 'periodicidade' => ['required', Rule::in($periodicidadesValidas)],
                 'vencimento' => ['required', 'date'],
+                'horario' => ['required', 'date_format:H:i'],
             ], [], [
                 'periodicidade' => 'periodicidade da meta',
                 'vencimento' => 'vencimento da meta',
+                'horario' => 'horário da meta',
             ]);
 
             $dadosValidados = $validator->validate();
@@ -166,6 +168,7 @@ class PacienteController extends Controller
             $metasValidadas[(int) $metaId] = [
                 'periodicidade' => $dadosValidados['periodicidade'],
                 'vencimento' => $dadosValidados['vencimento'] ?? null,
+                'horario' => $dadosValidados['horario'],
             ];
         }
 
@@ -180,6 +183,7 @@ class PacienteController extends Controller
             $syncData[$metaId] = [
                 'periodicidade' => $metaDados['periodicidade'],
                 'vencimento' => $metaDados['vencimento'] ?: null,
+                'horario' => $metaDados['horario'],
             ];
         }
 
