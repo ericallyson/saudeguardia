@@ -38,12 +38,14 @@ class PacienteController extends Controller
         $engajamento = $this->dashboardService->calcularEngajamento($paciente);
         $andamento = $this->dashboardService->calcularAndamentoTratamento($paciente);
         $metasFuturas = $this->dashboardService->listarMetasFuturas($paciente);
+        $metaCharts = $this->dashboardService->construirGraficosMetas($paciente);
 
         return view('pacientes.dashboard', [
             'paciente' => $paciente,
             'engajamento' => $engajamento,
             'andamento' => $andamento,
             'metasFuturas' => $metasFuturas,
+            'metaCharts' => $metaCharts,
         ]);
     }
 
