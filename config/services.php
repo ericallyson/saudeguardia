@@ -37,6 +37,7 @@ return [
 
     'whatsapp' => [
         'token' => env('WHATSAPP_API_TOKEN', 'hhjSsIvJIaVRniUlHgn1UjFe26tOt0bS'),
+        'send_text_url' => env('WHATSAPP_SEND_TEXT_URL', 'https://api-whatsapp.api-alisson.com.br/api/v1/message/send-text'),
         'webhook_base' => env('WHATSAPP_WEBHOOK_BASE', 'https://app.saudegaurdia.com.br'),
     ],
 

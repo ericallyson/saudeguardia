@@ -241,6 +241,14 @@
                                 ?? ($metaPaciente ? $metaPaciente->pivot->periodicidade : ($meta->periodicidade_padrao ?? ''));
                             $vencimentoSelecionado = $metaOld['vencimento']
                                 ?? ($metaPaciente ? ($metaPaciente->pivot->vencimento ?? '') : '');
+                            $horarioSelecionado = $metaOld['horario']
+                                ?? ($metaPaciente && $metaPaciente->pivot->horario
+                                    ? substr($metaPaciente->pivot->horario, 0, 5)
+                                    : '09:00');
+
+                            if (empty($horarioSelecionado)) {
+                                $horarioSelecionado = '09:00';
+                            }
                         @endphp
                         <div class="border border-[#e3d7c3] rounded-lg p-4 bg-white/60" data-meta-card="meta-{{ $meta->id }}">
                             <div class="flex items-start gap-3">
@@ -263,7 +271,7 @@
                                         @endif
                                     </div>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
                                             <label for="meta-periodicidade-{{ $meta->id }}" class="block text-sm font-medium text-gray-700">
                                                 Periodicidade
@@ -294,6 +302,22 @@
                                                 class="mt-1 block w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
                                             >
                                             @error('metas.' . $meta->id . '.vencimento')
+                                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                        <div>
+                                            <label for="meta-horario-{{ $meta->id }}" class="block text-sm font-medium text-gray-700">
+                                                Horário do envio
+                                            </label>
+                                            <input
+                                                type="time"
+                                                id="meta-horario-{{ $meta->id }}"
+                                                name="metas[{{ $meta->id }}][horario]"
+                                                value="{{ $horarioSelecionado }}"
+                                                class="mt-1 block w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+                                                step="60"
+                                            >
+                                            @error('metas.' . $meta->id . '.horario')
                                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                                             @enderror
                                         </div>
@@ -374,6 +398,7 @@
                 const checkbox = card.querySelector('input[type="checkbox"]');
                 const periodicidade = card.querySelector('select');
                 const vencimento = card.querySelector('input[type="date"]');
+                const horario = card.querySelector('input[type="time"]');
 
                 const updateState = () => {
                     const ativa = checkbox.checked;
@@ -384,8 +409,12 @@
                     vencimento.disabled = !ativa;
                     vencimento.required = ativa;
 
+                    horario.disabled = !ativa;
+                    horario.required = ativa;
+
                     if (!ativa) {
                         vencimento.value = '';
+                        horario.value = '09:00';
                     }
                 };
 
