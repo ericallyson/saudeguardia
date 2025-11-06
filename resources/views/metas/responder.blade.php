@@ -32,7 +32,9 @@
             <form method="POST" action="{{ route('metas.responder.store', $metaMessage->token) }}" class="space-y-6">
                 @csrf
                 <div class="space-y-2">
-                    <label for="valor" class="block text-sm font-medium text-slate-700">Como você está indo com esta meta?</label>
+                    <label for="valor" class="block text-sm font-medium text-slate-700">
+                        {{ filled($meta->descricao) ? $meta->descricao : 'Como você está indo com esta meta?' }}
+                    </label>
                     @include('metas.responder_campos', ['meta' => $meta, 'valorAnterior' => old('valor')])
                     @error('valor')
                         <p class="text-sm text-red-600">{{ $message }}</p>
