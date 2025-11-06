@@ -24,5 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::resource('metas', MetaController::class)->except('show');
+    Route::get('pacientes/{paciente}/dashboard', [PacienteController::class, 'dashboard'])
+        ->name('pacientes.dashboard');
     Route::resource('pacientes', PacienteController::class)->except('show');
 });
