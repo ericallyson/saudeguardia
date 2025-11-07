@@ -41,4 +41,11 @@ return [
         'webhook_base' => env('WHATSAPP_WEBHOOK_BASE', 'https://app.saudegaurdia.com.br'),
     ],
 
+    'subscriptions' => [
+        'base_url' => env('SUBSCRIPTIONS_BASE_URL', 'https://assinaturas.saudegaurdia.com.br/api'),
+        'default_plan_id' => env('SUBSCRIPTIONS_DEFAULT_PLAN_ID'),
+        'default_status' => env('SUBSCRIPTIONS_DEFAULT_STATUS', 'active'),
+        'default_price' => env('SUBSCRIPTIONS_DEFAULT_PRICE'),
+    ],
+
 ];

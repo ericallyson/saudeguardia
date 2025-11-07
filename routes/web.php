@@ -21,7 +21,7 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/webhooks/whatsapp', WhatsappWebhookController::class)->name('webhooks.whatsapp');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
