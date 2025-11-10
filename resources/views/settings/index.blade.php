@@ -47,7 +47,7 @@
                     </div>
                 </dl>
 
-                <div class="mt-6">
+                <div class="mt-6 space-y-4">
                     <div class="bg-white/80 border border-gray-200 rounded-lg p-4 flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-500 uppercase tracking-wide">Status atual</p>
@@ -56,6 +56,28 @@
                             </p>
                         </div>
                         <div id="status-indicator" class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3">
+                        <form method="POST" action="{{ route('settings.instance.connect') }}"
+                            id="connect-form" class="{{ $initialIsConnected ? 'hidden' : '' }}">
+                            @csrf
+                            <button type="submit"
+                                class="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg shadow-sm transition-colors"
+                                id="connect-button">
+                                Conectar instância
+                            </button>
+                        </form>
+
+                        <form method="POST" action="{{ route('settings.instance.disconnect') }}"
+                            id="disconnect-form" class="{{ $initialIsConnected ? '' : 'hidden' }}">
+                            @csrf
+                            <button type="submit"
+                                class="px-5 py-2 bg-rose-500 hover:bg-rose-600 text-white font-medium rounded-lg shadow-sm transition-colors"
+                                id="disconnect-button">
+                                Desconectar instância
+                            </button>
+                        </form>
                     </div>
                 </div>
 
@@ -85,30 +107,72 @@
                 const statusIndicator = document.getElementById('status-indicator');
                 const qrImage = document.getElementById('qr-code-image');
                 const qrPlaceholder = document.getElementById('qr-code-placeholder');
+                const connectForm = document.getElementById('connect-form');
+                const disconnectForm = document.getElementById('disconnect-form');
 
                 const statusClasses = {
                     connected: 'bg-emerald-500',
                     authenticated: 'bg-emerald-500',
+                    open: 'bg-emerald-500',
                     qr_code: 'bg-yellow-400',
                     connecting: 'bg-yellow-400',
                     loading: 'bg-yellow-400',
-                    disconnected: 'bg-rose-500'
+                    reconnecting: 'bg-yellow-400',
+                    disconnecting: 'bg-yellow-400',
+                    disconnected: 'bg-rose-500',
+                    close: 'bg-rose-500'
                 };
 
-                const applyStatus = (status, label, data = {}) => {
+                const connectedStatuses = @json($connectedStatuses);
+
+                const resolveConnectionState = (status, meta) => {
+                    if (meta && typeof meta.connected === 'boolean') {
+                        return meta.connected;
+                    }
+
+                    if (!status) {
+                        return false;
+                    }
+
+                    return connectedStatuses.includes(status);
+                };
+
+                const applyStatus = (status, label, meta = {}) => {
                     statusText.textContent = label ?? 'Status indisponível';
 
                     statusIndicator.className = 'w-3 h-3 rounded-full transition-colors duration-300';
-                    const indicatorClass = statusClasses[status] ?? 'bg-gray-400';
+                    const indicatorClass = status ? (statusClasses[status] ?? 'bg-gray-400') : 'bg-gray-400';
                     statusIndicator.classList.add(indicatorClass);
 
-                    if (data && data.qr_code_base64) {
+                    const isConnected = resolveConnectionState(status, meta);
+
+                    if (connectForm && disconnectForm) {
+                        if (isConnected) {
+                            connectForm.classList.add('hidden');
+                            disconnectForm.classList.remove('hidden');
+                        } else {
+                            connectForm.classList.remove('hidden');
+                            disconnectForm.classList.add('hidden');
+                        }
+                    }
+
+                    let qrCode = null;
+
+                    if (meta && typeof meta === 'object') {
+                        if (meta.qr_code_base64) {
+                            qrCode = meta.qr_code_base64;
+                        } else if (meta.data && meta.data.qr_code_base64) {
+                            qrCode = meta.data.qr_code_base64;
+                        }
+                    }
+
+                    if (qrCode) {
                         if (qrImage) {
-                            qrImage.src = data.qr_code_base64;
+                            qrImage.src = qrCode;
                         } else if (qrPlaceholder) {
                             const newImg = document.createElement('img');
                             newImg.id = 'qr-code-image';
-                            newImg.src = data.qr_code_base64;
+                            newImg.src = qrCode;
                             newImg.alt = 'QR Code do WhatsApp';
                             newImg.className = 'border border-gray-200 rounded-xl shadow-lg max-w-xs';
                             qrPlaceholder.replaceWith(newImg);
@@ -125,21 +189,32 @@
                     })
                         .then(response => {
                             if (!response.ok) {
-                                throw new Error('Request failed');
+                                return response
+                                    .json()
+                                    .catch(() => ({}))
+                                    .then(body => Promise.reject({ status: response.status, body }));
                             }
+
                             return response.json();
                         })
                         .then(data => {
-                            applyStatus(data.status, data.status_label, data.data ?? {});
+                            applyStatus(data.status, data.status_label, data);
                         })
-                        .catch(() => {
-                            applyStatus(null, 'Não foi possível atualizar o status.');
+                        .catch(error => {
+                            if (error && error.status === 404 && error.body) {
+                                applyStatus(error.body.status, error.body.status_label, { connected: false });
+                                return;
+                            }
+
+                            applyStatus(null, 'Não foi possível atualizar o status.', { connected: false });
                         });
                 };
 
-                @if ($initialStatus)
-                    applyStatus(@json($initialStatus), @json($initialStatusLabel));
-                @endif
+                applyStatus(
+                    @json($initialStatus),
+                    @json($initialStatusLabel ?? 'Status indisponível'),
+                    { connected: @json($initialIsConnected) }
+                );
 
                 fetchStatus();
                 setInterval(fetchStatus, 5000);

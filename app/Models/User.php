@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'whatsapp_instance_uuid',
+        'whatsapp_instance_status',
         'subscription_customer_id',
         'subscription_id',
         'subscription_plan_id',
