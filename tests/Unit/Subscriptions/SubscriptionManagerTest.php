@@ -17,10 +17,10 @@ class SubscriptionManagerTest extends TestCase
         config()->set('services.subscriptions.default_plan_id', 9);
         config()->set('services.subscriptions.default_status', 'active');
         config()->set('services.subscriptions.default_price', 99.9);
-        config()->set('services.subscriptions.base_url', 'https://assinaturas.saudegaurdia.com.br/api');
+        config()->set('services.subscriptions.base_url', 'https://assinaturas.saudeguardia.com.br/api');
 
         Http::fake([
-            'https://assinaturas.saudegaurdia.com.br/api/customers' => Http::response([
+            'https://assinaturas.saudeguardia.com.br/api/customers' => Http::response([
                 'data' => [
                     'id' => 123,
                     'first_name' => 'Ana',
@@ -29,7 +29,7 @@ class SubscriptionManagerTest extends TestCase
                     'status' => 'active',
                 ],
             ], 201),
-            'https://assinaturas.saudegaurdia.com.br/api/customers/123/subscriptions' => Http::response([
+            'https://assinaturas.saudeguardia.com.br/api/customers/123/subscriptions' => Http::response([
                 'data' => [
                     'id' => 456,
                     'customer_id' => 123,
@@ -50,7 +50,7 @@ class SubscriptionManagerTest extends TestCase
                     ],
                 ],
             ], 201),
-            'https://assinaturas.saudegaurdia.com.br/api/licenses/456' => Http::response([
+            'https://assinaturas.saudeguardia.com.br/api/licenses/456' => Http::response([
                 'data' => [
                     'id' => 456,
                     'status' => 'active',
@@ -102,7 +102,7 @@ class SubscriptionManagerTest extends TestCase
         config()->set('services.subscriptions.default_plan_id', 9);
 
         Http::fake([
-            'https://assinaturas.saudegaurdia.com.br/api/licenses/456' => Http::response([
+            'https://assinaturas.saudeguardia.com.br/api/licenses/456' => Http::response([
                 'data' => [
                     'id' => 456,
                     'status' => 'delinquent',
