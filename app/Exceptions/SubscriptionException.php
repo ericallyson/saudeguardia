@@ -15,14 +15,17 @@ class SubscriptionException extends RuntimeException
         parent::__construct($message, $code);
     }
 
-    public static function failed(string $operation, Response $response): self
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    public static function failed(string $operation, Response $response, array $context = []): self
     {
         return new self(
             sprintf('Subscription API call failed for [%s].', $operation),
-            [
+            array_merge($context, [
                 'status' => $response->status(),
                 'body' => $response->json(),
-            ],
+            ]),
             $response->status()
         );
     }

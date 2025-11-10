@@ -40,8 +40,16 @@
                 </label>
             </div>
             @if ($errors->any())
-                <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {{ $errors->first() }}
+                <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 space-y-2">
+                    <div>{{ $errors->first() }}</div>
+                    @if (session('subscription_debug'))
+                        @php
+                            $debug = json_encode(session('subscription_debug'), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                        @endphp
+                        <div class="rounded-md bg-white/60 px-3 py-2 text-xs font-mono text-red-600 overflow-x-auto">
+                            <pre class="whitespace-pre-wrap">{{ e($debug) }}</pre>
+                        </div>
+                    @endif
                 </div>
             @endif
             <button type="submit"

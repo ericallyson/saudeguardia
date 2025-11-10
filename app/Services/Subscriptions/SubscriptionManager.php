@@ -10,12 +10,19 @@ use Throwable;
 
 class SubscriptionManager
 {
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $lastRequestContext = [];
+
     public function __construct(private readonly SubscriptionClient $client)
     {
     }
 
     public function hasValidSubscription(User $user): bool
     {
+        $this->lastRequestContext = [];
+
         if ($this->isSubscriptionValid($user)) {
             return true;
         }
@@ -39,7 +46,11 @@ class SubscriptionManager
             }
 
         } catch (SubscriptionException $exception) {
-            Log::warning($exception->getMessage(), $exception->context() + ['user_id' => $user->id]);
+            $this->rememberLastRequest();
+            $context = array_merge($this->lastRequestContext, $exception->context());
+            $this->lastRequestContext = $context;
+
+            Log::warning($exception->getMessage(), $context + ['user_id' => $user->id]);
         } catch (Throwable $exception) {
             Log::error('Unexpected error while provisioning subscription', [
                 'user_id' => $user->id,
@@ -58,6 +69,7 @@ class SubscriptionManager
 
         try {
             $data = $this->client->getLicense($user->subscription_id);
+            $this->rememberLastRequest();
             $plan = Arr::get($data, 'plan', []);
             $customer = Arr::get($data, 'customer', []);
 
@@ -79,7 +91,11 @@ class SubscriptionManager
 
             return $data;
         } catch (SubscriptionException $exception) {
-            Log::warning($exception->getMessage(), $exception->context() + ['user_id' => $user->id]);
+            $this->rememberLastRequest();
+            $context = array_merge($this->lastRequestContext, $exception->context());
+            $this->lastRequestContext = $context;
+
+            Log::warning($exception->getMessage(), $context + ['user_id' => $user->id]);
         }
 
         return null;
@@ -98,6 +114,7 @@ class SubscriptionManager
         ], fn ($value) => $value !== null && $value !== '');
 
         $data = $this->client->createCustomer($payload);
+        $this->rememberLastRequest();
 
         $user->forceFill([
             'subscription_customer_id' => Arr::get($data, 'id'),
@@ -133,6 +150,7 @@ class SubscriptionManager
         }
 
         $data = $this->client->createSubscription($customerId, $payload);
+        $this->rememberLastRequest();
         $plan = Arr::get($data, 'plan', []);
 
         $user->forceFill([
@@ -152,6 +170,14 @@ class SubscriptionManager
         ])->save();
 
         return $data;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function lastRequestContext(): array
+    {
+        return $this->lastRequestContext;
     }
 
     protected function defaultPlanId(): ?int
@@ -176,6 +202,15 @@ class SubscriptionManager
     protected function isSubscriptionValid(User $user): bool
     {
         return $user->hasActiveSubscription();
+    }
+
+    protected function rememberLastRequest(): void
+    {
+        $context = $this->client->lastRequestContext();
+
+        if ($context !== []) {
+            $this->lastRequestContext = $context;
+        }
     }
 
     /**
