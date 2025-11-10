@@ -42,7 +42,7 @@ return [
     ],
 
     'subscriptions' => [
-        'base_url' => env('SUBSCRIPTIONS_BASE_URL', 'https://assinaturas.saudegaurdia.com.br/api'),
+        'base_url' => env('SUBSCRIPTIONS_BASE_URL', 'https://assinaturas.saudeguardia.com.br/api'),
         'default_plan_id' => env('SUBSCRIPTIONS_DEFAULT_PLAN_ID'),
         'default_status' => env('SUBSCRIPTIONS_DEFAULT_STATUS', 'active'),
         'default_price' => env('SUBSCRIPTIONS_DEFAULT_PRICE'),
