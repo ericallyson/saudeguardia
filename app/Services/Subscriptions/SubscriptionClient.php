@@ -116,7 +116,7 @@ class SubscriptionClient
 
     protected function baseUrl(): string
     {
-        $base = Arr::get($this->config, 'base_url', 'https://assinaturas.saudegaurdia.com.br/api');
+        $base = Arr::get($this->config, 'base_url', 'https://assinaturas.saudeguardia.com.br/api');
 
         return rtrim($base, '/');
     }
