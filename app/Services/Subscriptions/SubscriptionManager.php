@@ -19,12 +19,22 @@ class SubscriptionManager
     {
     }
 
-    public function hasValidSubscription(User $user): bool
+    public function hasValidSubscription(User $user, bool $allowProvisioning = true): bool
     {
         $this->lastRequestContext = [];
 
         if ($this->isSubscriptionValid($user)) {
             return true;
+        }
+
+        if (! $allowProvisioning) {
+            if ($user->subscription_id) {
+                $this->refreshSubscription($user);
+
+                return $this->isSubscriptionValid($user);
+            }
+
+            return false;
         }
 
         return $this->provisionForUser($user);
