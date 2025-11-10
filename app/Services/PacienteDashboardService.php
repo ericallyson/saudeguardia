@@ -90,8 +90,8 @@ class PacienteDashboardService
         return [
             'inicio' => $inicio,
             'fim' => $fim,
-            'dias_totais' => $totalDias,
-            'dias_passados' => $diasPassados,
+            'dias_totais' => (int) round($totalDias),
+            'dias_passados' => (int) round($diasPassados),
             'percentual_passado' => $percentualPassado,
             'percentual_futuro' => $percentualFuturo,
         ];
