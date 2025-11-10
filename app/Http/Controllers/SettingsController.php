@@ -14,11 +14,15 @@ class SettingsController extends Controller
     {
         $user = $request->user();
 
+        $currentStatus = $user->whatsapp_instance_status;
+
         return view('settings.index', [
             'user' => $user,
             'qrCode' => session('whatsapp_qr_code'),
-            'initialStatus' => session('whatsapp_status'),
-            'initialStatusLabel' => $this->humanReadableStatus(session('whatsapp_status')),
+            'initialStatus' => $currentStatus,
+            'initialStatusLabel' => $this->humanReadableStatus($currentStatus),
+            'initialIsConnected' => $this->isConnectedStatus($currentStatus),
+            'connectedStatuses' => $this->connectedStatuses(),
             'webhookUrl' => $this->resolveWebhookUrl(),
         ]);
     }
@@ -74,13 +78,101 @@ class SettingsController extends Controller
 
         $user->forceFill([
             'whatsapp_instance_uuid' => $data['uuid'],
+            'whatsapp_instance_status' => Arr::get($data, 'status'),
         ])->save();
 
         return redirect()
             ->route('settings.index')
             ->with('whatsapp_qr_code', Arr::get($data, 'qr_code_base64'))
-            ->with('whatsapp_status', Arr::get($data, 'status'))
             ->with('status', 'Instância criada com sucesso! Faça a leitura do QR Code para conectar.');
+    }
+
+    public function connectInstance(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->whatsapp_instance_uuid) {
+            return redirect()
+                ->route('settings.index')
+                ->with('error', 'Nenhuma instância configurada para este usuário.');
+        }
+
+        $payload = [
+            'token' => $this->getToken(),
+            'uuid' => $user->whatsapp_instance_uuid,
+        ];
+
+        $response = Http::acceptJson()->post(
+            'https://api-whatsapp.api-alisson.com.br/api/v1/instance/connect',
+            $payload
+        );
+
+        if (! $response->successful()) {
+            Log::warning('Erro ao conectar instância do WhatsApp', [
+                'user_id' => $user->id,
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+
+            return redirect()
+                ->route('settings.index')
+                ->with('error', 'Não foi possível solicitar a conexão da instância. Tente novamente mais tarde.');
+        }
+
+        $data = $response->json('data', []);
+        $status = Arr::get($data, 'status');
+
+        $user->forceFill([
+            'whatsapp_instance_status' => is_string($status) ? $status : 'connecting',
+        ])->save();
+
+        return redirect()
+            ->route('settings.index')
+            ->with('status', 'Solicitação de conexão enviada. Aguarde a atualização do status.');
+    }
+
+    public function disconnectInstance(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->whatsapp_instance_uuid) {
+            return redirect()
+                ->route('settings.index')
+                ->with('error', 'Nenhuma instância configurada para este usuário.');
+        }
+
+        $payload = [
+            'token' => $this->getToken(),
+            'uuid' => $user->whatsapp_instance_uuid,
+        ];
+
+        $response = Http::acceptJson()->post(
+            'https://api-whatsapp.api-alisson.com.br/api/v1/instance/disconnect',
+            $payload
+        );
+
+        if (! $response->successful()) {
+            Log::warning('Erro ao desconectar instância do WhatsApp', [
+                'user_id' => $user->id,
+                'status' => $response->status(),
+                'body' => $response->json(),
+            ]);
+
+            return redirect()
+                ->route('settings.index')
+                ->with('error', 'Não foi possível solicitar a desconexão da instância. Tente novamente mais tarde.');
+        }
+
+        $data = $response->json('data', []);
+        $status = Arr::get($data, 'status');
+
+        $user->forceFill([
+            'whatsapp_instance_status' => is_string($status) ? $status : 'disconnected',
+        ])->save();
+
+        return redirect()
+            ->route('settings.index')
+            ->with('status', 'Solicitação de desconexão enviada. Aguarde a atualização do status.');
     }
 
     public function instanceStatus(Request $request)
@@ -91,37 +183,14 @@ class SettingsController extends Controller
             return response()->json([
                 'status' => null,
                 'status_label' => 'Nenhuma instância configurada.',
+                'connected' => false,
             ], 404);
         }
 
-        $response = Http::acceptJson()->get(
-            'https://api-whatsapp.api-alisson.com.br/api/v1/instance/details',
-            [
-                'token' => $this->getToken(),
-                'uuid' => $user->whatsapp_instance_uuid,
-            ]
-        );
-
-        if (! $response->successful()) {
-            Log::warning('Erro ao consultar status da instância do WhatsApp', [
-                'user_id' => $user->id,
-                'status' => $response->status(),
-                'body' => $response->json(),
-            ]);
-
-            return response()->json([
-                'status' => null,
-                'status_label' => 'Não foi possível consultar o status da instância.',
-            ], 500);
-        }
-
-        $data = $response->json('data', []);
-        $status = Arr::get($data, 'status');
-
         return response()->json([
-            'status' => $status,
-            'status_label' => $this->humanReadableStatus($status),
-            'data' => $data,
+            'status' => $user->whatsapp_instance_status,
+            'status_label' => $this->humanReadableStatus($user->whatsapp_instance_status),
+            'connected' => $this->isConnectedStatus($user->whatsapp_instance_status),
         ]);
     }
 
@@ -142,12 +211,27 @@ class SettingsController extends Controller
     protected function humanReadableStatus(?string $status): string
     {
         return match ($status) {
-            'connected', 'authenticated' => 'Conectado',
+            'connected', 'authenticated', 'open' => 'Conectado',
             'qr_code' => 'Aguardando leitura do QR Code',
-            'loading', 'connecting' => 'Conectando...',
-            'disconnected' => 'Desconectado',
+            'loading', 'connecting', 'reconnecting' => 'Conectando...',
+            'disconnecting' => 'Desconectando...',
+            'disconnected', 'close' => 'Desconectado',
             null, '' => 'Status indisponível',
             default => Str::headline(str_replace('_', ' ', $status)),
         };
+    }
+
+    protected function connectedStatuses(): array
+    {
+        return ['connected', 'authenticated', 'open'];
+    }
+
+    protected function isConnectedStatus(?string $status): bool
+    {
+        if (! $status) {
+            return false;
+        }
+
+        return in_array($status, $this->connectedStatuses(), true);
     }
 }

@@ -33,5 +33,7 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
 
     Route::get('configuracoes', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('configuracoes/instancia', [SettingsController::class, 'createInstance'])->name('settings.instance.create');
+    Route::post('configuracoes/instancia/conectar', [SettingsController::class, 'connectInstance'])->name('settings.instance.connect');
+    Route::post('configuracoes/instancia/desconectar', [SettingsController::class, 'disconnectInstance'])->name('settings.instance.disconnect');
     Route::get('configuracoes/instancia/status', [SettingsController::class, 'instanceStatus'])->name('settings.instance.status');
 });
