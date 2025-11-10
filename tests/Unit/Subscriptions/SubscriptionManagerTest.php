@@ -155,4 +155,44 @@ class SubscriptionManagerTest extends TestCase
 
         Http::assertSentCount(0);
     }
+
+    public function testHasValidSubscriptionWithoutProvisioningOnlyRefreshesExisting(): void
+    {
+        Http::fake([
+            'https://assinaturas.saudeguardia.com.br/api/licenses/456' => Http::response([
+                'data' => [
+                    'id' => 456,
+                    'status' => 'active',
+                    'trial_ends_at' => null,
+                    'next_renewal_date' => now()->addDays(3)->toDateString(),
+                    'price' => 49.9,
+                    'metadata' => [],
+                    'customer' => [
+                        'id' => 123,
+                    ],
+                    'plan' => [
+                        'id' => 9,
+                        'name' => 'Plano Pro',
+                        'slug' => 'plano-pro',
+                        'features' => [],
+                    ],
+                ],
+            ]),
+        ]);
+
+        $user = User::factory()->create([
+            'subscription_customer_id' => 123,
+            'subscription_id' => 456,
+            'subscription_status' => 'inactive',
+            'subscription_next_renewal_date' => now()->subDay(),
+        ]);
+
+        $manager = app(SubscriptionManager::class);
+
+        $this->assertTrue($manager->hasValidSubscription($user, allowProvisioning: false));
+
+        $this->assertSame('active', $user->fresh()->subscription_status);
+
+        Http::assertSentCount(1);
+    }
 }

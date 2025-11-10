@@ -26,7 +26,7 @@ class EnsureActiveSubscription
             return $next($request);
         }
 
-        if ($this->subscriptions->hasValidSubscription($user)) {
+        if ($this->subscriptions->hasValidSubscription($user, allowProvisioning: false)) {
             return $next($request);
         }
 
