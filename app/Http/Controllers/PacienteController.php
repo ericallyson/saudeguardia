@@ -176,22 +176,35 @@ class PacienteController extends Controller
             $validator = Validator::make($metaDados, [
                 'meta_id' => ['required', Rule::in($metasDisponiveis)],
                 'vencimento' => ['nullable', 'date'],
-                'horario' => ['required', 'date_format:H:i'],
+                'horarios' => ['required', 'array', 'min:1', 'max:3'],
+                'horarios.*' => ['required', 'date_format:H:i'],
                 'dias_semana' => ['required', 'array', 'min:1'],
                 'dias_semana.*' => ['required', Rule::in($diasValidos)],
             ], [], [
                 'meta_id' => 'meta',
                 'vencimento' => 'vencimento',
-                'horario' => 'horário',
+                'horarios' => 'horários',
                 'dias_semana' => 'dias da semana',
             ]);
 
             $dadosValidados = $validator->validate();
 
+            $horarios = collect($dadosValidados['horarios'])
+                ->filter(fn ($horario) => is_string($horario) && $horario !== '')
+                ->map(fn ($horario) => substr($horario, 0, 5))
+                ->filter(fn ($horario) => preg_match('/^\d{2}:\d{2}$/', $horario) === 1)
+                ->unique()
+                ->values()
+                ->all();
+
+            if (empty($horarios)) {
+                continue;
+            }
+
             $metasValidadas[] = [
                 'meta_id' => (int) $dadosValidados['meta_id'],
                 'vencimento' => $dadosValidados['vencimento'] ?? null,
-                'horario' => $dadosValidados['horario'],
+                'horarios' => $horarios,
                 'dias_semana' => array_values(array_unique($dadosValidados['dias_semana'])),
             ];
         }
@@ -204,9 +217,11 @@ class PacienteController extends Controller
         $paciente->metas()->detach();
 
         foreach ($metas as $metaDados) {
+            $horarios = $metaDados['horarios'];
             $paciente->metas()->attach($metaDados['meta_id'], [
                 'vencimento' => $metaDados['vencimento'] ?: null,
-                'horario' => $metaDados['horario'],
+                'horario' => $horarios[0] ?? null,
+                'horarios' => json_encode($horarios),
                 'dias_semana' => json_encode($metaDados['dias_semana']),
             ]);
         }

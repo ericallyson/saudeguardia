@@ -4,8 +4,28 @@
 
     $metaId = $metaSelecionada['meta_id'] ?? '';
     $vencimento = $metaSelecionada['vencimento'] ?? '';
-    $horario = $metaSelecionada['horario'] ?? '09:00';
-    $horario = is_string($horario) && $horario !== '' ? substr($horario, 0, 5) : '09:00';
+
+    $horarios = collect($metaSelecionada['horarios'] ?? []);
+
+    if ($horarios->isEmpty()) {
+        $horarioUnico = $metaSelecionada['horario'] ?? null;
+        $horarios = collect($horarioUnico ? [$horarioUnico] : []);
+    }
+
+    $horarios = $horarios
+        ->filter(fn ($horario) => is_string($horario) && $horario !== '')
+        ->map(fn ($horario) => substr($horario, 0, 5))
+        ->filter(fn ($horario) => preg_match('/^\d{2}:\d{2}$/', $horario) === 1)
+        ->unique()
+        ->sort()
+        ->take(3)
+        ->values();
+
+    if ($horarios->isEmpty()) {
+        $horarios = collect(['09:00']);
+    }
+
+    $horarios = $horarios->all();
 
     $diasSelecionados = collect($metaSelecionada['dias_semana'] ?? [])
         ->filter(fn ($dia) => is_string($dia))
@@ -60,17 +80,61 @@
                     @enderror
                 @endif
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Horário do envio</label>
-                <input
-                    type="time"
-                    name="metas[{{ $index }}][horario]"
-                    value="{{ $horario }}"
-                    step="60"
-                    class="mt-1 block w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
-                >
+            <div class="md:col-span-2">
+                <div class="flex items-center justify-between">
+                    <label class="block text-sm font-medium text-gray-700">Horários do envio</label>
+                    <button
+                        type="button"
+                        class="text-sm font-medium text-indigo-600 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        data-add-horario
+                    >
+                        Adicionar horário
+                    </button>
+                </div>
+                <div class="mt-2 space-y-2" data-horarios-container>
+                    @foreach ($horarios as $horario)
+                        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3" data-horario-entry>
+                            <input
+                                type="time"
+                                name="metas[{{ $index }}][horarios][]"
+                                value="{{ $horario }}"
+                                step="60"
+                                class="w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+                            >
+                            <button
+                                type="button"
+                                class="text-sm font-medium text-red-600 hover:text-red-700"
+                                data-remove-horario
+                            >
+                                Remover horário
+                            </button>
+                        </div>
+                    @endforeach
+                </div>
+                <template data-horario-template>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3" data-horario-entry>
+                        <input
+                            type="time"
+                            name="metas[{{ $index }}][horarios][]"
+                            value=""
+                            step="60"
+                            class="w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
+                        >
+                        <button
+                            type="button"
+                            class="text-sm font-medium text-red-600 hover:text-red-700"
+                            data-remove-horario
+                        >
+                            Remover horário
+                        </button>
+                    </div>
+                </template>
+                <p class="mt-2 text-xs text-gray-500">Adicione até 3 horários para os lembretes desta meta.</p>
                 @if (is_numeric($index))
-                    @error('metas.' . $index . '.horario')
+                    @error('metas.' . $index . '.horarios')
+                        <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    @error('metas.' . $index . '.horarios.*')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 @endif

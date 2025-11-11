@@ -43,13 +43,35 @@
                 ? \Illuminate\Support\Carbon::parse($vencimento)->format('Y-m-d')
                 : '';
 
-            $horario = $meta->pivot->horario ?? '';
-            $horario = $horario !== '' ? substr($horario, 0, 5) : '09:00';
+            $horarios = $meta->pivot->horarios ?? [];
+
+            if (is_string($horarios)) {
+                $decodedHorarios = json_decode($horarios, true);
+                $horarios = is_array($decodedHorarios) ? $decodedHorarios : [];
+            }
+
+            if (! is_array($horarios) || empty($horarios)) {
+                $horarioUnico = $meta->pivot->horario ?? null;
+                $horarios = $horarioUnico ? [$horarioUnico] : [];
+            }
+
+            $horariosNormalizados = collect($horarios)
+                ->filter(fn ($horario) => is_string($horario) && $horario !== '')
+                ->map(fn ($horario) => substr($horario, 0, 5))
+                ->filter(fn ($horario) => preg_match('/^\d{2}:\d{2}$/', $horario) === 1)
+                ->unique()
+                ->sort()
+                ->take(3)
+                ->values();
+
+            if ($horariosNormalizados->isEmpty()) {
+                $horariosNormalizados = collect(['09:00']);
+            }
 
             return [
                 'meta_id' => $meta->id,
                 'vencimento' => $vencimento,
-                'horario' => $horario ?: '09:00',
+                'horarios' => $horariosNormalizados->all(),
                 'dias_semana' => $diasNormalizados,
             ];
         })->values();
@@ -69,16 +91,30 @@
             ->values()
             ->all();
 
-        $horario = $meta['horario'] ?? '';
+        $horarios = $meta['horarios'] ?? [];
 
-        if (! is_string($horario) || $horario === '') {
-            $horario = '09:00';
+        if (! is_array($horarios) || empty($horarios)) {
+            $horarioUnico = $meta['horario'] ?? null;
+            $horarios = $horarioUnico ? [$horarioUnico] : [];
+        }
+
+        $horariosNormalizados = collect($horarios)
+            ->filter(fn ($horario) => is_string($horario) && $horario !== '')
+            ->map(fn ($horario) => substr($horario, 0, 5))
+            ->filter(fn ($horario) => preg_match('/^\d{2}:\d{2}$/', $horario) === 1)
+            ->unique()
+            ->sort()
+            ->take(3)
+            ->values();
+
+        if ($horariosNormalizados->isEmpty()) {
+            $horariosNormalizados = collect(['09:00']);
         }
 
         return [
             'meta_id' => $meta['meta_id'] ?? '',
             'vencimento' => $meta['vencimento'] ?? '',
-            'horario' => substr($horario, 0, 5),
+            'horarios' => $horariosNormalizados->all(),
             'dias_semana' => $diasNormalizados,
         ];
     });
@@ -359,7 +395,7 @@
                 'metaSelecionada' => [
                     'meta_id' => '',
                     'vencimento' => '',
-                    'horario' => '09:00',
+                'horarios' => ['09:00'],
                     'dias_semana' => [],
                 ],
                 'metas' => $metas,
@@ -450,6 +486,7 @@
             const addButton = document.getElementById('adicionar-meta');
             const emptyMessage = document.querySelector('[data-meta-empty]');
             let metaIndex = Number({{ $metaIndexCounter }}) || 0;
+            const MAX_HORARIOS = 3;
 
             if (!container) {
                 return;
@@ -480,6 +517,108 @@
                     });
                 }
 
+                const horariosContainer = entry.querySelector('[data-horarios-container]');
+                const addHorarioButton = entry.querySelector('[data-add-horario]');
+                const horarioTemplate = entry.querySelector('[data-horario-template]');
+
+                if (!horariosContainer) {
+                    return;
+                }
+
+                const updateHorarioState = () => {
+                    const entries = horariosContainer.querySelectorAll('[data-horario-entry]');
+
+                    if (addHorarioButton) {
+                        if (entries.length >= MAX_HORARIOS) {
+                            addHorarioButton.setAttribute('disabled', 'disabled');
+                            addHorarioButton.classList.add('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            addHorarioButton.removeAttribute('disabled');
+                            addHorarioButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+                    }
+
+                    entries.forEach((horarioEntry) => {
+                        const removeHorarioButton = horarioEntry.querySelector('[data-remove-horario]');
+
+                        if (!removeHorarioButton) {
+                            return;
+                        }
+
+                        if (entries.length <= 1) {
+                            removeHorarioButton.setAttribute('disabled', 'disabled');
+                            removeHorarioButton.classList.add('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            removeHorarioButton.removeAttribute('disabled');
+                            removeHorarioButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+                    });
+                };
+
+                const attachHorarioEntryListeners = (horarioEntry) => {
+                    if (!horarioEntry) {
+                        return;
+                    }
+
+                    const removeHorarioButton = horarioEntry.querySelector('[data-remove-horario]');
+
+                    if (removeHorarioButton) {
+                        removeHorarioButton.addEventListener('click', () => {
+                            const entries = horariosContainer.querySelectorAll('[data-horario-entry]');
+
+                            if (entries.length <= 1) {
+                                return;
+                            }
+
+                            horarioEntry.remove();
+                            updateHorarioState();
+                        });
+                    }
+                };
+
+                horariosContainer.querySelectorAll('[data-horario-entry]').forEach(attachHorarioEntryListeners);
+
+                if (addHorarioButton && horarioTemplate) {
+                    addHorarioButton.addEventListener('click', () => {
+                        const total = horariosContainer.querySelectorAll('[data-horario-entry]').length;
+
+                        if (total >= MAX_HORARIOS) {
+                            return;
+                        }
+
+                        let newEntry = null;
+
+                        if (horarioTemplate instanceof HTMLTemplateElement) {
+                            const templateContent = horarioTemplate.content.firstElementChild;
+                            newEntry = templateContent ? templateContent.cloneNode(true) : null;
+                        } else {
+                            newEntry = horarioTemplate.cloneNode(true);
+                        }
+
+                        if (!newEntry || typeof newEntry.querySelector !== 'function') {
+                            return;
+                        }
+
+                        if (newEntry instanceof HTMLElement) {
+                            newEntry.removeAttribute('data-horario-template');
+                        }
+
+                        if (!newEntry.hasAttribute('data-horario-entry')) {
+                            newEntry.setAttribute('data-horario-entry', '');
+                        }
+
+                        const input = newEntry.querySelector('input[type="time"]');
+                        if (input) {
+                            input.value = '';
+                        }
+
+                        horariosContainer.appendChild(newEntry);
+                        attachHorarioEntryListeners(newEntry);
+                        updateHorarioState();
+                    });
+                }
+
+                updateHorarioState();
             };
 
             container.querySelectorAll('[data-meta-entry]').forEach(attachEntryListeners);
