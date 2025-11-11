@@ -4,8 +4,93 @@
     /** @var \App\Models\Paciente|null $paciente */
     $paciente = $paciente ?? new \App\Models\Paciente();
     $metas = collect($metas ?? []);
-    $pacienteMetas = ($paciente->relationLoaded('metas') ? $paciente->metas : ($paciente->metas ?? collect()))->keyBy('id');
-    $periodicidadesDisponiveis = \App\Models\Meta::PERIODICIDADES;
+    $diasSemanaOptions = collect($diasSemanaOptions ?? [
+        'monday' => 'Segunda-feira',
+        'tuesday' => 'Terça-feira',
+        'wednesday' => 'Quarta-feira',
+        'thursday' => 'Quinta-feira',
+        'friday' => 'Sexta-feira',
+        'saturday' => 'Sábado',
+        'sunday' => 'Domingo',
+    ]);
+
+    $pacienteMetas = collect();
+
+    if ($paciente->exists && $paciente->relationLoaded('metas')) {
+        $pacienteMetas = collect($paciente->metas ?? []);
+    }
+
+    $metasSelecionadas = collect(old('metas', []));
+
+    if ($metasSelecionadas->isEmpty() && $pacienteMetas->isNotEmpty()) {
+        $metasSelecionadas = $pacienteMetas->map(function ($meta) use ($diasSemanaOptions) {
+            $dias = $meta->pivot->dias_semana ?? [];
+
+            if (is_string($dias)) {
+                $decoded = json_decode($dias, true);
+                $dias = is_array($decoded) ? $decoded : [];
+            }
+
+            $diasNormalizados = collect(is_array($dias) ? $dias : [])
+                ->filter(fn ($dia) => is_string($dia))
+                ->map(fn ($dia) => strtolower($dia))
+                ->filter(fn ($dia) => $diasSemanaOptions->has($dia))
+                ->values()
+                ->all();
+
+            $vencimento = $meta->pivot->vencimento ?? null;
+            $vencimento = $vencimento
+                ? \Illuminate\Support\Carbon::parse($vencimento)->format('Y-m-d')
+                : '';
+
+            $horario = $meta->pivot->horario ?? '';
+            $horario = $horario !== '' ? substr($horario, 0, 5) : '09:00';
+
+            return [
+                'meta_id' => $meta->id,
+                'vencimento' => $vencimento,
+                'horario' => $horario ?: '09:00',
+                'dias_semana' => $diasNormalizados,
+            ];
+        })->values();
+    }
+
+    $metasSelecionadas = $metasSelecionadas->map(function ($meta) use ($diasSemanaOptions) {
+        $dias = $meta['dias_semana'] ?? [];
+
+        if (! is_array($dias)) {
+            $dias = [];
+        }
+
+        $diasNormalizados = collect($dias)
+            ->filter(fn ($dia) => is_string($dia))
+            ->map(fn ($dia) => strtolower($dia))
+            ->filter(fn ($dia) => $diasSemanaOptions->has($dia))
+            ->values()
+            ->all();
+
+        $horario = $meta['horario'] ?? '';
+
+        if (! is_string($horario) || $horario === '') {
+            $horario = '09:00';
+        }
+
+        return [
+            'meta_id' => $meta['meta_id'] ?? '',
+            'vencimento' => $meta['vencimento'] ?? '',
+            'horario' => substr($horario, 0, 5),
+            'dias_semana' => $diasNormalizados,
+        ];
+    });
+
+    $metaIndexCounter = $metasSelecionadas->keys()
+        ->filter(fn ($key) => is_numeric($key))
+        ->map(fn ($key) => (int) $key)
+        ->max();
+
+    $metaIndexCounter = is_numeric($metaIndexCounter)
+        ? $metaIndexCounter + 1
+        : $metasSelecionadas->count();
 @endphp
 
 <div class="space-y-8">
@@ -224,110 +309,62 @@
         </div>
 
         <div class="mt-8">
-            <h3 class="text-md font-semibold text-gray-800 mb-4">Metas cadastradas</h3>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h3 class="text-md font-semibold text-gray-800">Metas vinculadas ao paciente</h3>
+                    <p class="text-sm text-gray-500">Escolha quantas metas forem necessárias e personalize dias, horários e vencimento.</p>
+                </div>
+                @if ($metas->isNotEmpty())
+                    <button
+                        type="button"
+                        id="adicionar-meta"
+                        class="inline-flex items-center rounded-md border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 shadow-sm hover:bg-indigo-100"
+                    >
+                        Adicionar meta
+                    </button>
+                @endif
+            </div>
+
+            <p
+                class="mt-4 text-sm text-gray-500"
+                data-meta-empty
+                @if ($metasSelecionadas->isNotEmpty())
+                    hidden
+                @endif
+            >
+                Nenhuma meta adicionada. Clique em &ldquo;Adicionar meta&rdquo; para começar.
+            </p>
 
             @if ($metas->isEmpty())
-                <p class="text-sm text-gray-500">Nenhuma meta cadastrada no sistema.</p>
-            @else
-                <div class="space-y-4">
-                    @foreach ($metas as $meta)
-                        @php
-                            $metaOld = old('metas.' . $meta->id, []);
-                            $metaPaciente = $pacienteMetas->get($meta->id);
-                            $metaSelecionada = isset($metaOld['selected'])
-                                ? (bool) $metaOld['selected']
-                                : ($metaPaciente !== null);
-                            $periodicidadeSelecionada = $metaOld['periodicidade']
-                                ?? ($metaPaciente ? $metaPaciente->pivot->periodicidade : ($meta->periodicidade_padrao ?? ''));
-                            $vencimentoSelecionado = $metaOld['vencimento']
-                                ?? ($metaPaciente ? ($metaPaciente->pivot->vencimento ?? '') : '');
-                            $horarioSelecionado = $metaOld['horario']
-                                ?? ($metaPaciente && $metaPaciente->pivot->horario
-                                    ? substr($metaPaciente->pivot->horario, 0, 5)
-                                    : '09:00');
-
-                            if (empty($horarioSelecionado)) {
-                                $horarioSelecionado = '09:00';
-                            }
-                        @endphp
-                        <div class="border border-[#e3d7c3] rounded-lg p-4 bg-white/60" data-meta-card="meta-{{ $meta->id }}">
-                            <div class="flex items-start gap-3">
-                                <div class="pt-1">
-                                    <input
-                                        type="checkbox"
-                                        id="meta-{{ $meta->id }}"
-                                        name="metas[{{ $meta->id }}][selected]"
-                                        value="1"
-                                        @checked($metaSelecionada)
-                                    >
-                                </div>
-                                <div class="flex-1 space-y-4">
-                                    <div class="flex flex-col">
-                                        <label for="meta-{{ $meta->id }}" class="text-sm font-semibold text-gray-800">
-                                            {{ $meta->nome }}
-                                        </label>
-                                        @if ($meta->descricao)
-                                            <p class="text-sm text-gray-500">{{ $meta->descricao }}</p>
-                                        @endif
-                                    </div>
-
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div>
-                                            <label for="meta-periodicidade-{{ $meta->id }}" class="block text-sm font-medium text-gray-700">
-                                                Periodicidade
-                                            </label>
-                                            <select
-                                                id="meta-periodicidade-{{ $meta->id }}"
-                                                name="metas[{{ $meta->id }}][periodicidade]"
-                                                class="mt-1 block w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
-                                            >
-                                                <option value="">Selecione</option>
-                                                @foreach ($periodicidadesDisponiveis as $valor => $label)
-                                                    <option value="{{ $valor }}" @selected($periodicidadeSelecionada === $valor)>{{ $label }}</option>
-                                                @endforeach
-                                            </select>
-                                            @error('metas.' . $meta->id . '.periodicidade')
-                                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
-                                        </div>
-                                        <div>
-                                            <label for="meta-vencimento-{{ $meta->id }}" class="block text-sm font-medium text-gray-700">
-                                                Vencimento
-                                            </label>
-                                            <input
-                                                type="date"
-                                                id="meta-vencimento-{{ $meta->id }}"
-                                                name="metas[{{ $meta->id }}][vencimento]"
-                                                value="{{ $vencimentoSelecionado }}"
-                                                class="mt-1 block w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
-                                            >
-                                            @error('metas.' . $meta->id . '.vencimento')
-                                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
-                                        </div>
-                                        <div>
-                                            <label for="meta-horario-{{ $meta->id }}" class="block text-sm font-medium text-gray-700">
-                                                Horário do envio
-                                            </label>
-                                            <input
-                                                type="time"
-                                                id="meta-horario-{{ $meta->id }}"
-                                                name="metas[{{ $meta->id }}][horario]"
-                                                value="{{ $horarioSelecionado }}"
-                                                class="mt-1 block w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
-                                                step="60"
-                                            >
-                                            @error('metas.' . $meta->id . '.horario')
-                                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
+                <p class="mt-4 text-sm text-red-500">
+                    Cadastre metas no sistema para poder vinculá-las aos pacientes.
+                </p>
             @endif
+
+            <div id="meta-entries" class="mt-4 space-y-4">
+                @foreach ($metasSelecionadas as $index => $metaSelecionada)
+                    @include('pacientes.partials.meta-entry', [
+                        'index' => $index,
+                        'metaSelecionada' => $metaSelecionada,
+                        'metas' => $metas,
+                        'diasSemanaOptions' => $diasSemanaOptions,
+                    ])
+                @endforeach
+            </div>
+        </div>
+
+        <div id="meta-entry-template" class="hidden">
+            @include('pacientes.partials.meta-entry', [
+                'index' => '__INDEX__',
+                'metaSelecionada' => [
+                    'meta_id' => '',
+                    'vencimento' => '',
+                    'horario' => '09:00',
+                    'dias_semana' => [],
+                ],
+                'metas' => $metas,
+                'diasSemanaOptions' => $diasSemanaOptions,
+            ])
         </div>
     </div>
 
@@ -376,51 +413,117 @@
     </div>
 </div>
 
-<div class="mt-6 flex justify-end space-x-3">
-    <a
-        href="{{ route('pacientes.index') }}"
-        class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
-    >
-        Cancelar
-    </a>
-    <button
-        type="submit"
-        class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
-    >
-        Salvar paciente
-    </button>
+<div class="mt-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    @if ($paciente->exists)
+        <form action="{{ route('pacientes.cancelar-metas', $paciente) }}" method="POST" class="inline-flex">
+            @csrf
+            <button
+                type="submit"
+                class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 shadow-sm transition hover:bg-red-100"
+            >
+                Cancelar metas futuras
+            </button>
+        </form>
+    @endif
+
+    <div class="flex justify-end gap-3">
+        <a
+            href="{{ route('pacientes.index') }}"
+            class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+        >
+            Cancelar
+        </a>
+        <button
+            type="submit"
+            class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700"
+        >
+            Salvar paciente
+        </button>
+    </div>
 </div>
 
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('[data-meta-card]').forEach((card) => {
-                const checkbox = card.querySelector('input[type="checkbox"]');
-                const periodicidade = card.querySelector('select');
-                const vencimento = card.querySelector('input[type="date"]');
-                const horario = card.querySelector('input[type="time"]');
+            const container = document.getElementById('meta-entries');
+            const templateContainer = document.getElementById('meta-entry-template');
+            const addButton = document.getElementById('adicionar-meta');
+            const emptyMessage = document.querySelector('[data-meta-empty]');
+            let metaIndex = Number({{ $metaIndexCounter }}) || 0;
 
-                const updateState = () => {
-                    const ativa = checkbox.checked;
+            if (!container) {
+                return;
+            }
 
-                    periodicidade.disabled = !ativa;
-                    periodicidade.required = ativa;
+            const updateEmptyState = () => {
+                if (!emptyMessage) {
+                    return;
+                }
 
-                    vencimento.disabled = !ativa;
-                    vencimento.required = ativa;
+                if (container.querySelector('[data-meta-entry]')) {
+                    emptyMessage.setAttribute('hidden', 'hidden');
+                } else {
+                    emptyMessage.removeAttribute('hidden');
+                }
+            };
 
-                    horario.disabled = !ativa;
-                    horario.required = ativa;
+            const attachEntryListeners = (entry) => {
+                if (!entry) {
+                    return;
+                }
 
-                    if (!ativa) {
-                        vencimento.value = '';
-                        horario.value = '09:00';
+                const removeButton = entry.querySelector('[data-remove-meta]');
+                if (removeButton) {
+                    removeButton.addEventListener('click', () => {
+                        entry.remove();
+                        updateEmptyState();
+                    });
+                }
+
+                const select = entry.querySelector('[data-meta-select]');
+                const description = entry.querySelector('[data-meta-description]');
+
+                if (select && description) {
+                    const updateDescription = () => {
+                        const option = select.options[select.selectedIndex];
+                        const text = option?.dataset.metaDescription ?? '';
+                        description.textContent = text !== ''
+                            ? text
+                            : 'Selecione uma meta para ver a descrição.';
+                    };
+
+                    updateDescription();
+                    select.addEventListener('change', updateDescription);
+                }
+            };
+
+            container.querySelectorAll('[data-meta-entry]').forEach(attachEntryListeners);
+            updateEmptyState();
+
+            if (addButton && templateContainer) {
+                addButton.addEventListener('click', () => {
+                    const template = templateContainer.innerHTML;
+
+                    if (!template) {
+                        return;
                     }
-                };
 
-                updateState();
-                checkbox.addEventListener('change', updateState);
-            });
+                    const html = template.replace(/__INDEX__/g, metaIndex);
+                    metaIndex += 1;
+
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = html.trim();
+                    const entry = wrapper.firstElementChild;
+
+                    if (!entry) {
+                        return;
+                    }
+
+                    attachEntryListeners(entry);
+                    container.appendChild(entry);
+                    updateEmptyState();
+                });
+            }
         });
     </script>
 @endpush

@@ -11,7 +11,11 @@
 
         <form action="{{ route('pacientes.update', $paciente) }}" method="POST" class="space-y-8">
             @method('PUT')
-            @include('pacientes.form', ['paciente' => $paciente, 'metas' => $metas ?? collect()])
+            @include('pacientes.form', [
+                'paciente' => $paciente,
+                'metas' => $metas ?? collect(),
+                'diasSemanaOptions' => $diasSemanaOptions ?? [],
+            ])
         </form>
     </div>
 @endsection

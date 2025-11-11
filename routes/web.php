@@ -29,6 +29,8 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::resource('metas', MetaController::class)->except('show');
     Route::get('pacientes/{paciente}/dashboard', [PacienteController::class, 'dashboard'])
         ->name('pacientes.dashboard');
+    Route::post('pacientes/{paciente}/cancelar-metas', [PacienteController::class, 'cancelarMetas'])
+        ->name('pacientes.cancelar-metas');
     Route::resource('pacientes', PacienteController::class)->except('show');
 
     Route::get('configuracoes', [SettingsController::class, 'index'])->name('settings.index');
