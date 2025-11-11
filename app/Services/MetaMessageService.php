@@ -36,6 +36,19 @@ class MetaMessageService
             });
     }
 
+    public function rebuildForMeta(Meta $meta): void
+    {
+        $meta->load('pacientes');
+
+        if ($meta->pacientes->isEmpty()) {
+            return;
+        }
+
+        foreach ($meta->pacientes as $paciente) {
+            $this->rebuildForPaciente($paciente);
+        }
+    }
+
     public function rebuildForPaciente(Paciente $paciente): void
     {
         $paciente->load('metas');
@@ -74,12 +87,18 @@ class MetaMessageService
 
     private function buildSchedule(Paciente $paciente, Meta $meta): Collection
     {
+        $horarios = $this->resolveHorarios($meta);
+
+        if (empty($horarios)) {
+            return collect();
+        }
+
         $inicio = $paciente->data_inicio instanceof Carbon
             ? $paciente->data_inicio->copy()
             : Carbon::now();
 
         $inicio = $inicio->isPast() ? Carbon::now() : $inicio;
-        $inicio = $inicio->startOfDay()->setTimeFromTimeString($this->resolveHorario($meta));
+        $inicio = $inicio->startOfDay()->setTimeFromTimeString($horarios[0]);
 
         $diasSelecionados = $this->resolveDiasSemana($meta);
 
@@ -101,19 +120,54 @@ class MetaMessageService
 
         for ($dataAtual = $inicio->copy(); $dataAtual->lte($vencimento); $dataAtual->addDay()) {
             if (in_array($dataAtual->dayOfWeekIso, $diasPermitidos, true)) {
-                $datas->push($dataAtual->copy());
+                foreach ($horarios as $horario) {
+                    $datas->push($dataAtual->copy()->setTimeFromTimeString($horario));
+                }
             }
         }
 
-        return $datas;
+        return $datas
+            ->sortBy(fn (Carbon $data) => $data->timestamp)
+            ->values();
     }
 
-    private function resolveHorario(Meta $meta): string
+    /**
+     * @return array<int, string>
+     */
+    private function resolveHorarios(Meta $meta): array
     {
-        $horario = $meta->pivot?->horario;
+        $horarios = $meta->pivot?->horarios ?? [];
 
+        if (is_string($horarios)) {
+            $decoded = json_decode($horarios, true);
+            $horarios = is_array($decoded) ? $decoded : [];
+        }
+
+        if (! is_array($horarios) || empty($horarios)) {
+            $horarioUnico = $meta->pivot?->horario ?? null;
+            $horarios = $horarioUnico ? [$horarioUnico] : [];
+        }
+
+        $normalizados = collect($horarios)
+            ->map(fn ($horario) => $this->normalizeHorario($horario))
+            ->filter()
+            ->unique()
+            ->sort()
+            ->take(3)
+            ->values()
+            ->all();
+
+        if (empty($normalizados)) {
+            return [self::DEFAULT_TIME];
+        }
+
+        return $normalizados;
+    }
+
+    private function normalizeHorario(mixed $horario): ?string
+    {
         if (! is_string($horario) || $horario === '') {
-            return self::DEFAULT_TIME;
+            return null;
         }
 
         $normalized = substr($horario, 0, 5);
@@ -126,7 +180,7 @@ class MetaMessageService
             return $horario;
         }
 
-        return self::DEFAULT_TIME;
+        return null;
     }
 
     /**

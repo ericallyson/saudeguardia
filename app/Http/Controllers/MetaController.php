@@ -3,12 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\Meta;
+use App\Services\MetaMessageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class MetaController extends Controller
 {
+    public function __construct(
+        private readonly MetaMessageService $metaMessageService
+    ) {
+    }
+
     /**
      * Display a listing of the metas.
      */
@@ -61,6 +67,8 @@ class MetaController extends Controller
         $data = $this->validateMeta($request);
 
         $meta->update($data);
+
+        $this->metaMessageService->rebuildForMeta($meta);
 
         return redirect()->route('metas.index')->with('success', 'Meta atualizada com sucesso.');
     }
