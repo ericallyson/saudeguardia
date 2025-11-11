@@ -125,7 +125,9 @@ class PacienteDashboardService
                 },
             ])
             ->orderBy('metas.nome')
-            ->get();
+            ->get()
+            ->unique('id')
+            ->values();
 
         return $metas
             ->map(fn (Meta $meta) => $this->buildMetaChart($meta, $agora))

@@ -8,12 +8,23 @@ use App\Services\MetaMessageService;
 use App\Services\PacienteDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class PacienteController extends Controller
 {
+    private const DIAS_SEMANA = [
+        'monday' => 'Segunda-feira',
+        'tuesday' => 'Terça-feira',
+        'wednesday' => 'Quarta-feira',
+        'thursday' => 'Quinta-feira',
+        'friday' => 'Sexta-feira',
+        'saturday' => 'Sábado',
+        'sunday' => 'Domingo',
+    ];
+
     public function __construct(
         private readonly MetaMessageService $metaMessageService,
         private readonly PacienteDashboardService $dashboardService,
@@ -56,7 +67,9 @@ class PacienteController extends Controller
     {
         $metas = Meta::orderBy('nome')->get();
 
-        return view('pacientes.create', compact('metas'));
+        $diasSemanaOptions = self::DIAS_SEMANA;
+
+        return view('pacientes.create', compact('metas', 'diasSemanaOptions'));
     }
 
     /**
@@ -83,7 +96,9 @@ class PacienteController extends Controller
         $paciente->load('metas');
         $metas = Meta::orderBy('nome')->get();
 
-        return view('pacientes.edit', compact('paciente', 'metas'));
+        $diasSemanaOptions = self::DIAS_SEMANA;
+
+        return view('pacientes.edit', compact('paciente', 'metas', 'diasSemanaOptions'));
     }
 
     /**
@@ -139,38 +154,41 @@ class PacienteController extends Controller
     protected function validatePacienteMetas(Request $request): array
     {
         $metasRequest = $request->input('metas', []);
-        $metasDisponiveis = Meta::pluck('id')->all();
-        $periodicidadesValidas = array_keys(Meta::PERIODICIDADES);
+
+        if (! is_array($metasRequest)) {
+            return [];
+        }
+
+        $metasDisponiveis = Meta::pluck('id')->map(fn ($id) => (int) $id)->all();
+        $diasValidos = array_keys(self::DIAS_SEMANA);
 
         $metasValidadas = [];
 
-        foreach ($metasRequest as $metaId => $metaDados) {
-            if (!in_array((int) $metaId, $metasDisponiveis, true)) {
-                continue;
-            }
-
-            $selecionada = filter_var($metaDados['selected'] ?? false, FILTER_VALIDATE_BOOLEAN);
-
-            if (! $selecionada) {
+        foreach (array_values($metasRequest) as $metaDados) {
+            if (! is_array($metaDados)) {
                 continue;
             }
 
             $validator = Validator::make($metaDados, [
-                'periodicidade' => ['required', Rule::in($periodicidadesValidas)],
-                'vencimento' => ['required', 'date'],
+                'meta_id' => ['required', Rule::in($metasDisponiveis)],
+                'vencimento' => ['nullable', 'date'],
                 'horario' => ['required', 'date_format:H:i'],
+                'dias_semana' => ['required', 'array', 'min:1'],
+                'dias_semana.*' => ['required', Rule::in($diasValidos)],
             ], [], [
-                'periodicidade' => 'periodicidade da meta',
-                'vencimento' => 'vencimento da meta',
-                'horario' => 'horário da meta',
+                'meta_id' => 'meta',
+                'vencimento' => 'vencimento',
+                'horario' => 'horário',
+                'dias_semana' => 'dias da semana',
             ]);
 
             $dadosValidados = $validator->validate();
 
-            $metasValidadas[(int) $metaId] = [
-                'periodicidade' => $dadosValidados['periodicidade'],
+            $metasValidadas[] = [
+                'meta_id' => (int) $dadosValidados['meta_id'],
                 'vencimento' => $dadosValidados['vencimento'] ?? null,
                 'horario' => $dadosValidados['horario'],
+                'dias_semana' => array_values(array_unique($dadosValidados['dias_semana'])),
             ];
         }
 
@@ -179,16 +197,25 @@ class PacienteController extends Controller
 
     protected function syncPacienteMetas(Paciente $paciente, array $metas): void
     {
-        $syncData = [];
+        $paciente->metas()->detach();
 
-        foreach ($metas as $metaId => $metaDados) {
-            $syncData[$metaId] = [
-                'periodicidade' => $metaDados['periodicidade'],
+        foreach ($metas as $metaDados) {
+            $paciente->metas()->attach($metaDados['meta_id'], [
                 'vencimento' => $metaDados['vencimento'] ?: null,
                 'horario' => $metaDados['horario'],
-            ];
+                'dias_semana' => json_encode($metaDados['dias_semana']),
+            ]);
         }
+    }
 
-        $paciente->metas()->sync($syncData);
+    public function cancelarMetas(Paciente $paciente): RedirectResponse
+    {
+        $paciente->metaMessages()
+            ->where('data_envio', '>=', Carbon::now())
+            ->delete();
+
+        return redirect()
+            ->route('pacientes.edit', $paciente)
+            ->with('success', 'Metas futuras canceladas com sucesso.');
     }
 }
