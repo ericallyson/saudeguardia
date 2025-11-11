@@ -14,8 +14,6 @@
         ->values()
         ->all();
 
-    $metaDefinida = $metas->firstWhere('id', (int) $metaId);
-    $descricaoMeta = $metaDefinida?->descricao;
 @endphp
 
 <div class="border border-[#e3d7c3] rounded-lg bg-white/70 p-4" data-meta-entry>
@@ -26,15 +24,10 @@
                 <select
                     name="metas[{{ $index }}][meta_id]"
                     class="mt-1 block w-full rounded-lg border border-[#e3d7c3] bg-white/90 p-2.5 focus:border-blue-400 focus:ring-2 focus:ring-blue-200"
-                    data-meta-select
                 >
                     <option value="">Selecione uma meta</option>
                     @foreach ($metas as $metaOption)
-                        <option
-                            value="{{ $metaOption->id }}"
-                            data-meta-description="{{ e($metaOption->descricao ?? '') }}"
-                            @selected((string) $metaId === (string) $metaOption->id)
-                        >
+                        <option value="{{ $metaOption->id }}" @selected((string) $metaId === (string) $metaOption->id)>
                             {{ $metaOption->nome }}
                         </option>
                     @endforeach
@@ -51,10 +44,6 @@
                 </button>
             </div>
         </div>
-
-        <p class="text-sm text-gray-500" data-meta-description>
-            {{ $descricaoMeta ? $descricaoMeta : 'Selecione uma meta para ver a descrição.' }}
-        </p>
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>

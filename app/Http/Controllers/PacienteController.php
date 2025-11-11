@@ -65,7 +65,9 @@ class PacienteController extends Controller
      */
     public function create(): View
     {
-        $metas = Meta::orderBy('nome')->get();
+        $metas = Meta::query()
+            ->orderBy('nome')
+            ->get(['id', 'nome']);
 
         $diasSemanaOptions = self::DIAS_SEMANA;
 
@@ -94,7 +96,9 @@ class PacienteController extends Controller
     public function edit(Paciente $paciente): View
     {
         $paciente->load('metas');
-        $metas = Meta::orderBy('nome')->get();
+        $metas = Meta::query()
+            ->orderBy('nome')
+            ->get(['id', 'nome']);
 
         $diasSemanaOptions = self::DIAS_SEMANA;
 

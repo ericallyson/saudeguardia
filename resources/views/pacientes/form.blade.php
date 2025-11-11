@@ -480,21 +480,6 @@
                     });
                 }
 
-                const select = entry.querySelector('[data-meta-select]');
-                const description = entry.querySelector('[data-meta-description]');
-
-                if (select && description) {
-                    const updateDescription = () => {
-                        const option = select.options[select.selectedIndex];
-                        const text = option?.dataset.metaDescription ?? '';
-                        description.textContent = text !== ''
-                            ? text
-                            : 'Selecione uma meta para ver a descrição.';
-                    };
-
-                    updateDescription();
-                    select.addEventListener('change', updateDescription);
-                }
             };
 
             container.querySelectorAll('[data-meta-entry]').forEach(attachEntryListeners);
