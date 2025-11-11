@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::table('meta_paciente', function (Blueprint $table) {
             try {
-                $table->dropUnique(['paciente_id', 'meta_id']);
+                $table->dropUnique('meta_paciente_paciente_id_meta_id_unique');
             } catch (\Throwable $exception) {
                 // O índice pode já ter sido removido em outra migração.
             }
@@ -24,6 +26,8 @@ return new class extends Migration
 
             $table->json('dias_semana')->nullable()->after('horario');
         });
+
+        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -31,6 +35,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::table('meta_paciente', function (Blueprint $table) {
             $table->dropColumn('dias_semana');
 
@@ -38,5 +44,7 @@ return new class extends Migration
 
             $table->unique(['paciente_id', 'meta_id']);
         });
+
+        Schema::enableForeignKeyConstraints();
     }
 };
