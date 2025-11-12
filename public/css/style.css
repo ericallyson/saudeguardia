@@ -1,0 +1,12 @@
+body {
+    font-family: 'Inter', sans-serif;
+    scroll-behavior: smooth;
+}
+
+.font-inter {
+    font-family: 'Inter', sans-serif;
+}
+
+#mobile-menu.show {
+    display: block;
+}
