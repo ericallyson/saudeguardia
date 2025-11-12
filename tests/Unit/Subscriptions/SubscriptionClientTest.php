@@ -33,4 +33,29 @@ class SubscriptionClientTest extends TestCase
             ['id' => 30, 'name' => 'Plano de testes'],
         ], $plans);
     }
+
+    public function test_list_plans_appends_api_path_when_missing(): void
+    {
+        Http::fake([
+            'https://assinaturas.saudeguardia.com.br/api/plans' => Http::response([
+                'data' => [
+                    ['id' => 45, 'name' => 'Plano sem API no base URL'],
+                ],
+            ]),
+        ]);
+
+        $client = new SubscriptionClient([
+            'base_url' => 'https://assinaturas.saudeguardia.com.br',
+        ]);
+
+        $plans = $client->listPlans();
+
+        Http::assertSent(function (Request $request): bool {
+            return $request->url() === 'https://assinaturas.saudeguardia.com.br/api/plans';
+        });
+
+        $this->assertSame([
+            ['id' => 45, 'name' => 'Plano sem API no base URL'],
+        ], $plans);
+    }
 }
