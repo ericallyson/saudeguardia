@@ -1,435 +1,238 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saúde Guardiã — Acompanhe pacientes com cuidado contínuo</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top left, #fef6ec, #f3f7fb 55%, #eef2f6);
-            color: #1f2933;
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            box-shadow: 0 20px 45px rgba(31, 45, 61, 0.08);
-            backdrop-filter: blur(12px);
-        }
-        .hero-shape {
-            background: linear-gradient(135deg, rgba(255, 223, 186, 0.45), rgba(193, 216, 255, 0.45));
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saúde Guardiã — Dashboard Premium</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #f8f5f1, #e9f2f9);
+      color: #3d3d3d;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 1rem;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+      transition: transform .2s ease, box-shadow .3s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col">
-<header class="w-full">
-    <div class="max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gradient-to-b from-[#f3ede1] to-[#fdfbf7] border-r border-[#e3d7c3] p-6 flex flex-col">
+      <img src="https://app.saudeguardia.com.br/img/logo-horizontal.png" alt="Saúde Guardiã" class="w-auto">
+      <nav class="mt-6">
+        <a class="flex items-center px-6 py-2 mt-4 text-gray-700 bg-gray-200" href="index.html">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          <span class="mx-3">Dashboard</span>
+        </a>
+        <a class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-200 hover:text-gray-700" href="pacientes.html">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5.975 5.975 0 0112 13.489m0 0a5.975 5.975 0 015.403 2.316m0 0A7.47 7.47 0 0115 21"></path></svg>
+          <span class="mx-3">Pacientes</span>
+        </a>
+        <a class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-200 hover:text-gray-700" href="relatorios.html">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z"></path></svg>
+          <span class="mx-3">Relatórios</span>
+        </a>
+        <a class="flex items-center px-6 py-2 mt-4 text-gray-500 hover:bg-gray-200 hover:text-gray-700" href="configuracoes.html">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          <span class="mx-3">Configurações</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 p-8">
+      <header class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-semibold text-[#2d3a4d]">Painel de Monitoramento</h2>
         <div class="flex items-center gap-3">
-            <img src="{{ asset('images/logo-horizontal.svg') }}" alt="Saúde Guardiã" class="h-12 w-auto">
+          <img src="/img/doctor.jpg" class="w-10 h-10 rounded-full border-2 border-[#9fc5e8]" alt="avatar">
+          <span class="font-medium text-[#4b3f36]">Dr. João</span>
         </div>
-        <nav class="flex items-center gap-4 text-sm font-medium text-slate-600">
-            <a href="#solucoes" class="hover:text-slate-900 transition">Soluções</a>
-            <a href="#planos" class="hover:text-slate-900 transition">Planos</a>
-            <a href="#faq" class="hover:text-slate-900 transition">Dúvidas</a>
-            <a href="{{ route('login') }}"
-               class="inline-flex items-center gap-2 rounded-full border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:text-slate-900 transition">
-                Entrar
-            </a>
-        </nav>
-    </div>
-</header>
+      </header>
 
-<main class="flex-1">
-    <section class="max-w-6xl mx-auto px-6 pt-12 pb-24 grid lg:grid-cols-2 gap-12 items-center">
-        <div>
-            <span class="inline-flex items-center rounded-full bg-[#fef3c7] text-[#b45309] px-4 py-1 text-xs font-semibold uppercase tracking-wider">Monitoramento longitudinal inteligente</span>
-            <h1 class="mt-6 text-4xl sm:text-5xl font-extrabold text-slate-900 leading-tight">
-                Acompanhe seus pacientes diariamente com automações humanizadas
-            </h1>
-            <p class="mt-5 text-lg text-slate-600 leading-relaxed">
-                A Saúde Guardiã integra lembretes inteligentes, análises de engajamento e relatórios automáticos para que você ofereça cuidados contínuos sem aumentar a carga administrativa.
-            </p>
-            <div class="mt-8 flex flex-wrap gap-4">
-                <a href="{{ route('login') }}"
-                   class="inline-flex items-center justify-center rounded-full bg-[#2d3a4d] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-400/20 transition hover:opacity-95">
-                    Entrar
-                </a>
-                <a href="#planos" data-scroll="planos"
-                   class="inline-flex items-center justify-center rounded-full border border-[#2d3a4d] px-6 py-3 text-sm font-semibold text-[#2d3a4d] hover:bg-[#2d3a4d] hover:text-white transition">
-                    Assine agora
-                </a>
-            </div>
-            <dl class="mt-10 grid grid-cols-2 gap-6 text-sm text-slate-600">
-                <div class="glass-card rounded-2xl border border-white/60 p-6">
-                    <dt class="text-xs uppercase tracking-widest text-slate-500">Pacientes engajados</dt>
-                    <dd class="mt-2 text-3xl font-bold text-[#2d3a4d]">+85%</dd>
-                    <p class="mt-2 text-xs text-slate-500">Aumento médio de adesão às metas acompanhadas.</p>
-                </div>
-                <div class="glass-card rounded-2xl border border-white/60 p-6">
-                    <dt class="text-xs uppercase tracking-widest text-slate-500">Automação de mensagens</dt>
-                    <dd class="mt-2 text-3xl font-bold text-[#2d3a4d]">24h/dia</dd>
-                    <p class="mt-2 text-xs text-slate-500">Fluxos personalizados via WhatsApp com monitoramento contínuo.</p>
-                </div>
-            </dl>
+      <!-- KPIs -->
+      <section class="grid md:grid-cols-3 gap-6 mb-8">
+        <div class="card p-6">
+          <h3 class="text-lg font-semibold text-[#4b3f36] mb-2">Pacientes Ativos</h3>
+          <div class="flex justify-between items-center">
+            <span class="text-4xl font-bold text-[#2d3a4d]">150</span>
+            <span class="text-green-600 text-sm">▲ 10%</span>
+          </div>
         </div>
-        <div class="relative">
-            <div class="absolute inset-0 hero-shape rounded-[2.5rem] blur-3xl opacity-80"></div>
-            <div class="relative glass-card rounded-[2.5rem] border border-white/70 p-8">
-                <h2 class="text-lg font-semibold text-[#2d3a4d]">Tudo o que você precisa em um painel</h2>
-                <ul class="mt-6 space-y-4 text-sm text-slate-600">
-                    <li class="flex gap-3">
-                        <span class="mt-1 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#2d3a4d]/10 text-[#2d3a4d] font-semibold">1</span>
-                        <div>
-                            <p class="font-semibold text-slate-800">Metas personalizadas para cada paciente</p>
-                            <p class="text-slate-500">Defina lembretes, periodicidade e acompanhe em tempo real.</p>
-                        </div>
-                    </li>
-                    <li class="flex gap-3">
-                        <span class="mt-1 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#2d3a4d]/10 text-[#2d3a4d] font-semibold">2</span>
-                        <div>
-                            <p class="font-semibold text-slate-800">Dashboard com indicadores claros</p>
-                            <p class="text-slate-500">Monitore evolução, engajamento e alertas críticos em um só lugar.</p>
-                        </div>
-                    </li>
-                    <li class="flex gap-3">
-                        <span class="mt-1 inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#2d3a4d]/10 text-[#2d3a4d] font-semibold">3</span>
-                        <div>
-                            <p class="font-semibold text-slate-800">Relatórios automáticos</p>
-                            <p class="text-slate-500">Receba insights semanais para agir com rapidez e precisão.</p>
-                        </div>
-                    </li>
-                </ul>
-            </div>
+        <div class="card p-6">
+          <h3 class="text-lg font-semibold text-[#4b3f36] mb-2">Engajamento Médio</h3>
+          <div class="flex justify-between items-center">
+            <span class="text-4xl font-bold text-[#2d3a4d]">85%</span>
+            <span class="text-green-600 text-sm">▲ 5%</span>
+          </div>
         </div>
-    </section>
-
-    <section id="solucoes" class="bg-white/70 py-20">
-        <div class="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-8">
-            <article class="glass-card rounded-3xl border border-slate-100 p-8">
-                <h3 class="text-xl font-semibold text-[#2d3a4d]">Monitoramento contínuo</h3>
-                <p class="mt-3 text-sm text-slate-600">Acompanhe peso, pressão arterial, glicemias, hábitos e muito mais com lembretes automáticos.</p>
-            </article>
-            <article class="glass-card rounded-3xl border border-slate-100 p-8">
-                <h3 class="text-xl font-semibold text-[#2d3a4d]">Mensagens humanizadas</h3>
-                <p class="mt-3 text-sm text-slate-600">Envios via WhatsApp com linguagem acolhedora para motivar pacientes a cumprirem as metas.</p>
-            </article>
-            <article class="glass-card rounded-3xl border border-slate-100 p-8">
-                <h3 class="text-xl font-semibold text-[#2d3a4d]">Relatórios inteligentes</h3>
-                <p class="mt-3 text-sm text-slate-600">Receba resumos automáticos e identifique rapidamente quem precisa de atenção.</p>
-            </article>
+        <div class="card p-6">
+          <h3 class="text-lg font-semibold text-[#4b3f36] mb-2">Alertas da Semana</h3>
+          <div class="flex justify-between items-center">
+            <span class="text-4xl font-bold text-[#2d3a4d]">25</span>
+            <span class="text-red-600 text-sm">▼ 2%</span>
+          </div>
         </div>
-    </section>
+      </section>
 
-    <section id="planos" class="py-20">
-        <div class="max-w-6xl mx-auto px-6">
-            <div class="max-w-2xl">
-                <span class="inline-flex items-center rounded-full bg-[#dbeafe] text-[#1d4ed8] px-4 py-1 text-xs font-semibold uppercase tracking-wider">Escolha o plano ideal</span>
-                <h2 class="mt-6 text-3xl font-extrabold text-[#1f2937]">Planos flexíveis para escalar o cuidado</h2>
-                <p class="mt-4 text-slate-600">Todos os planos incluem integrações com WhatsApp, dashboards em tempo real e suporte dedicado.</p>
-            </div>
-
-            @if ($plansError)
-                <div class="mt-8 rounded-2xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700">
-                    {{ $plansError }}
-                </div>
-            @endif
-
-            <div class="mt-12 grid gap-8 lg:grid-cols-{{ max(count($plans), 1) > 1 ? 2 : 1 }}">
-                @forelse ($plans as $plan)
-                    @php
-                        $billingPeriod = $plan['billing_period'] ?? 'monthly';
-                        $price = $plan['prices'][$billingPeriod] ?? null;
-                        $formattedPrice = $price !== null ? 'R$ '.number_format((float) $price, 2, ',', '.') : 'Sob consulta';
-                        $periodLabel = [
-                            'monthly' => 'mês',
-                            'yearly' => 'ano',
-                            'quarterly' => 'trimestre',
-                            'semiannual' => 'semestre',
-                            'semi-annually' => 'semestre',
-                        ][$billingPeriod] ?? 'período';
-                        $trialDays = (int) ($plan['trial_days'] ?? 0);
-                        $features = collect($plan['features'] ?? [])->take(6);
-                    @endphp
-                    <article class="glass-card flex flex-col rounded-3xl border border-slate-100/80 p-8">
-                        <header>
-                            <p class="text-xs uppercase tracking-[0.25em] text-slate-500">{{ $plan['slug'] ?? 'Plano' }}</p>
-                            <h3 class="mt-3 text-2xl font-bold text-[#2d3a4d]">{{ $plan['name'] }}</h3>
-                            <p class="mt-2 text-sm text-slate-600">{{ $plan['description'] ?? 'Plano completo para sua equipe médica.' }}</p>
-                        </header>
-                        <div class="mt-6 flex items-baseline gap-2 text-[#2d3a4d]">
-                            <span class="text-4xl font-extrabold">{{ $formattedPrice }}</span>
-                            <span class="text-sm font-semibold text-slate-500">/ {{ $periodLabel }}</span>
-                        </div>
-                        @if ($trialDays > 0)
-                            <p class="mt-2 text-xs font-medium text-emerald-600">{{ $trialDays }} dias de teste incluídos</p>
-                        @endif
-
-                        <ul class="mt-6 flex-1 space-y-3 text-sm text-slate-600">
-                            @forelse ($features as $feature)
-                                <li class="flex gap-3">
-                                    <span class="mt-1 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#2d3a4d]/10 text-xs font-bold text-[#2d3a4d]">✓</span>
-                                    <div>
-                                        <p class="font-medium text-slate-800">{{ $feature['name'] ?? 'Funcionalidade exclusiva' }}</p>
-                                        @if (!empty($feature['description']))
-                                            <p class="text-xs text-slate-500">{{ $feature['description'] }}</p>
-                                        @endif
-                                        @if (!empty($feature['limit']['value']) && !empty($feature['limit']['unit']))
-                                            <p class="text-xs text-slate-400">Limite: {{ $feature['limit']['value'] }} {{ $feature['limit']['unit'] }}</p>
-                                        @endif
-                                    </div>
-                                </li>
-                            @empty
-                                <li class="flex gap-3">
-                                    <span class="mt-1 inline-flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#2d3a4d]/10 text-xs font-bold text-[#2d3a4d]">✓</span>
-                                    <p>Recursos completos para acompanhamento longitudinal.</p>
-                                </li>
-                            @endforelse
-                        </ul>
-
-                        <div class="mt-8">
-                            <button type="button"
-                                    data-plan-button
-                                    data-plan-id="{{ $plan['id'] }}"
-                                    class="w-full rounded-full bg-[#2d3a4d] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-400/20 transition hover:opacity-95">
-                                Começar agora
-                            </button>
-                        </div>
-                    </article>
-                @empty
-                    <div class="rounded-3xl border border-slate-200 bg-white/70 p-10 text-center text-slate-600">
-                        <p class="text-lg font-semibold text-slate-700">Nenhum plano disponível no momento.</p>
-                        <p class="mt-2 text-sm">Entre em contato com nossa equipe comercial para encontrar a melhor opção para a sua clínica.</p>
-                    </div>
-                @endforelse
-            </div>
+      <!-- NOVO: Box de Pacientes em Alerta -->
+      <section class="card p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-[#4b3f36]">Pacientes em Alerta</h3>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#fde8e8] text-[#9b1c1c] font-semibold">Crítico: 3</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#fff6d8] text-[#8a6c00] font-semibold">Atenção: 5</span>
+          </div>
         </div>
-    </section>
 
-    <section id="faq" class="bg-[#f8fafc] py-20">
-        <div class="max-w-5xl mx-auto px-6">
-            <h2 class="text-3xl font-extrabold text-[#1f2937]">Dúvidas frequentes</h2>
-            <div class="mt-10 space-y-6">
-                <article class="glass-card rounded-3xl border border-slate-100 p-6">
-                    <h3 class="text-lg font-semibold text-[#2d3a4d]">Como funciona a integração com WhatsApp?</h3>
-                    <p class="mt-2 text-sm text-slate-600">Conectamos sua conta profissional para disparar lembretes automáticos nos dias e horários definidos, com confirmações das respostas dos pacientes.</p>
-                </article>
-                <article class="glass-card rounded-3xl border border-slate-100 p-6">
-                    <h3 class="text-lg font-semibold text-[#2d3a4d]">Posso personalizar as metas de cada paciente?</h3>
-                    <p class="mt-2 text-sm text-slate-600">Sim! Configure metas de peso, pressão, exames, atividades físicas e outros indicadores com periodicidade personalizada para cada paciente.</p>
-                </article>
-                <article class="glass-card rounded-3xl border border-slate-100 p-6">
-                    <h3 class="text-lg font-semibold text-[#2d3a4d]">Os relatórios são automáticos?</h3>
-                    <p class="mt-2 text-sm text-slate-600">Toda sexta-feira geramos um PDF com indicadores de evolução e engajamento para apoiar suas condutas médicas.</p>
-                </article>
-            </div>
-        </div>
-    </section>
-</main>
-
-<footer class="bg-white/80">
-    <div class="max-w-6xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
-        <p>&copy; {{ now()->year }} Saúde Guardiã. Todos os direitos reservados.</p>
-        <div class="flex items-center gap-4">
-            <a href="#planos" class="hover:text-slate-700">Planos</a>
-            <a href="#faq" class="hover:text-slate-700">Perguntas frequentes</a>
-            <a href="mailto:contato@saudeguardia.com.br" class="hover:text-slate-700">Fale conosco</a>
-        </div>
-    </div>
-</footer>
-
-<div id="signup-overlay" class="fixed inset-0 z-40 hidden bg-slate-900/60 backdrop-blur-sm"></div>
-<div id="signup-modal" class="fixed inset-0 z-50 hidden items-center justify-center px-4">
-    <div class="glass-card relative w-full max-w-lg rounded-3xl border border-white/70 bg-white p-8 shadow-2xl">
-        <button type="button" id="signup-close" class="absolute right-4 top-4 text-slate-400 transition hover:text-slate-600" aria-label="Fechar">
-            &times;
-        </button>
-        <h2 class="text-2xl font-bold text-[#2d3a4d]">Cadastre-se para começar</h2>
-        <p class="mt-1 text-sm text-slate-600">Conclua seu cadastro para vincular sua assinatura e acessar o painel Saúde Guardiã.</p>
-
-        @if ($errors->has('registration'))
-            <div class="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {{ $errors->first('registration') }}
-            </div>
-        @endif
-
-        <form method="POST" action="{{ route('home.register') }}" class="mt-6 space-y-4">
-            @csrf
-            <input type="hidden" name="plan_id" id="signup-plan-id" value="{{ old('plan_id') }}">
-
-            <div class="rounded-2xl bg-[#f8fafc] px-4 py-3">
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Plano selecionado</p>
-                <p id="signup-plan-name" class="text-lg font-bold text-[#2d3a4d] mt-1">Selecione um plano</p>
-                <p id="signup-plan-summary" class="text-sm text-slate-500"></p>
-                <ul id="signup-plan-features" class="mt-3 space-y-1 text-xs text-slate-500"></ul>
-                @error('plan_id')
-                    <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="signup-name" class="block text-sm font-medium text-slate-600">Nome completo</label>
-                <input type="text" id="signup-name" name="name" value="{{ old('name') }}"
-                       class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-[#2d3a4d] focus:outline-none focus:ring-2 focus:ring-[#2d3a4d]/30"
-                       required>
-                @error('name')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div>
-                <label for="signup-email" class="block text-sm font-medium text-slate-600">E-mail profissional</label>
-                <input type="email" id="signup-email" name="email" value="{{ old('email') }}"
-                       class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-[#2d3a4d] focus:outline-none focus:ring-2 focus:ring-[#2d3a4d]/30"
-                       required>
-                @error('email')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div class="grid md:grid-cols-2 gap-4">
+          <!-- Item 1 -->
+          <div class="flex items-start gap-3 p-4 rounded-lg border border-[#f5d0cb] bg-[#fff7f5]">
+            <img src="/img/patient3.jpg" class="w-10 h-10 rounded-full object-cover" alt="Carlos Souza">
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
                 <div>
-                    <label for="signup-password" class="block text-sm font-medium text-slate-600">Senha</label>
-                    <input type="password" id="signup-password" name="password"
-                           class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-[#2d3a4d] focus:outline-none focus:ring-2 focus:ring-[#2d3a4d]/30"
-                           required>
-                    @error('password')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
+                  <p class="font-semibold text-[#2d3a4d]">Carlos Souza</p>
+                  <p class="text-sm text-[#6b5b51]">Sem registro de medicação há 3 dias</p>
                 </div>
-                <div>
-                    <label for="signup-password_confirmation" class="block text-sm font-medium text-slate-600">Confirmar senha</label>
-                    <input type="password" id="signup-password_confirmation" name="password_confirmation"
-                           class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-[#2d3a4d] focus:outline-none focus:ring-2 focus:ring-[#2d3a4d]/30"
-                           required>
-                </div>
+                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-[#fde8e8] text-[#9b1c1c]">Crítico</span>
+              </div>
+              <p class="text-xs text-[#6b5b51] mt-1">Engajamento: 45%</p>
+              <div class="mt-3 flex gap-2">
+                <a href="paciente-detalhes.html" class="px-3 py-1.5 rounded-md text-sm bg-[#dceaf7] text-[#2d3a4d] hover:opacity-90">Ver detalhes</a>
+                <button class="px-3 py-1.5 rounded-md text-sm bg-[#9fc5e8] text-[#1b2432] hover:opacity-90">Contatar</button>
+              </div>
             </div>
+          </div>
 
-            <div>
-                <label for="signup-phone" class="block text-sm font-medium text-slate-600">Telefone</label>
-                <input type="text" id="signup-phone" name="phone" value="{{ old('phone') }}"
-                       class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-[#2d3a4d] focus:outline-none focus:ring-2 focus:ring-[#2d3a4d]/30"
-                       placeholder="+55 11 99999-0000">
-                @error('phone')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <!-- Item 2 -->
+          <div class="flex items-start gap-3 p-4 rounded-lg border border-[#f2e3b3] bg-[#fffbea]">
+            <img src="/img/patient2.jpg" class="w-10 h-10 rounded-full object-cover" alt="Maria Oliveira">
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
                 <div>
-                    <label for="signup-document_type" class="block text-sm font-medium text-slate-600">Tipo de documento</label>
-                    <select id="signup-document_type" name="document_type"
-                            class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-[#2d3a4d] focus:outline-none focus:ring-2 focus:ring-[#2d3a4d]/30">
-                        <option value="">Selecione</option>
-                        <option value="CPF" @selected(old('document_type') === 'CPF')>CPF</option>
-                        <option value="CNPJ" @selected(old('document_type') === 'CNPJ')>CNPJ</option>
-                    </select>
-                    @error('document_type')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
+                  <p class="font-semibold text-[#2d3a4d]">Maria Oliveira</p>
+                  <p class="text-sm text-[#6b5b51]">Perdeu sessão de exercícios ontem</p>
                 </div>
-                <div>
-                    <label for="signup-document_number" class="block text-sm font-medium text-slate-600">Número do documento</label>
-                    <input type="text" id="signup-document_number" name="document_number" value="{{ old('document_number') }}"
-                           class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm shadow-sm focus:border-[#2d3a4d] focus:outline-none focus:ring-2 focus:ring-[#2d3a4d]/30">
-                    @error('document_number')
-                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-[#fff6d8] text-[#8a6c00]">Atenção</span>
+              </div>
+              <p class="text-xs text-[#6b5b51] mt-1">Engajamento: 70%</p>
+              <div class="mt-3 flex gap-2">
+                <a href="paciente-detalhes.html" class="px-3 py-1.5 rounded-md text-sm bg-[#dceaf7] text-[#2d3a4d] hover:opacity-90">Ver detalhes</a>
+                <button class="px-3 py-1.5 rounded-md text-sm bg-[#9fc5e8] text-[#1b2432] hover:opacity-90">Contatar</button>
+              </div>
             </div>
+          </div>
 
-            <button type="submit"
-                    class="w-full rounded-full bg-[#2d3a4d] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-400/20 transition hover:opacity-95">
-                Criar minha conta e avançar para o pagamento
-            </button>
-        </form>
-    </div>
-</div>
+          <!-- Item 3 -->
+          <div class="flex items-start gap-3 p-4 rounded-lg border border-[#f2e3b3] bg-[#fffbea]">
+            <img src="/img/patient4.jpg" class="w-10 h-10 rounded-full object-cover" alt="Ana Pereira">
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="font-semibold text-[#2d3a4d]">Ana Pereira</p>
+                  <p class="text-sm text-[#6b5b51]">Glicemia acima do alvo</p>
+                </div>
+                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-[#fff6d8] text-[#8a6c00]">Atenção</span>
+              </div>
+              <p class="text-xs text-[#6b5b51] mt-1">Última medição: 142 mg/dL</p>
+              <div class="mt-3 flex gap-2">
+                <a href="paciente-detalhes.html" class="px-3 py-1.5 rounded-md text-sm bg-[#dceaf7] text-[#2d3a4d] hover:opacity-90">Ver detalhes</a>
+                <button class="px-3 py-1.5 rounded-md text-sm bg-[#9fc5e8] text-[#1b2432] hover:opacity-90">Contatar</button>
+              </div>
+            </div>
+          </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const scrollButtons = document.querySelectorAll('[data-scroll]');
-        const overlay = document.getElementById('signup-overlay');
-        const modal = document.getElementById('signup-modal');
-        const closeBtn = document.getElementById('signup-close');
-        const planInput = document.getElementById('signup-plan-id');
-        const planName = document.getElementById('signup-plan-name');
-        const planSummary = document.getElementById('signup-plan-summary');
-        const planFeatures = document.getElementById('signup-plan-features');
-        const planButtons = document.querySelectorAll('[data-plan-button]');
-        const plans = @json($plans);
+          <!-- Item 4 -->
+          <div class="flex items-start gap-3 p-4 rounded-lg border border-[#f5d0cb] bg-[#fff7f5]">
+            <img src="/img/patient5.jpg" class="w-10 h-10 rounded-full object-cover" alt="Rafael Lima">
+            <div class="flex-1">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="font-semibold text-[#2d3a4d]">Rafael Lima</p>
+                  <p class="text-sm text-[#6b5b51]">Pressão 150/100 nas últimas 24h</p>
+                </div>
+                <span class="px-2 py-1 rounded-full text-xs font-semibold bg-[#fde8e8] text-[#9b1c1c]">Crítico</span>
+              </div>
+              <p class="text-xs text-[#6b5b51] mt-1">Recomendado: reavaliação</p>
+              <div class="mt-3 flex gap-2">
+                <a href="paciente-detalhes.html" class="px-3 py-1.5 rounded-md text-sm bg-[#dceaf7] text-[#2d3a4d] hover:opacity-90">Ver detalhes</a>
+                <button class="px-3 py-1.5 rounded-md text-sm bg-[#9fc5e8] text-[#1b2432] hover:opacity-90">Contatar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- FIM do novo box -->
 
-        const openModal = (planId = null) => {
-            planFeatures.innerHTML = '';
+      <section class="grid md:grid-cols-2 gap-6 mb-8">
+        <div class="card p-6">
+          <h3 class="text-lg font-semibold text-[#4b3f36] mb-4">Evolução dos Pacientes</h3>
+          <canvas id="evolucaoChart" height="180"></canvas>
+        </div>
+        <div class="card p-6">
+          <h3 class="text-lg font-semibold text-[#4b3f36] mb-4">Distribuição de Status</h3>
+          <canvas id="statusChart" height="180"></canvas>
+        </div>
+      </section>
 
-            if (planId) {
-                const selectedPlan = plans.find(plan => Number(plan.id) === Number(planId));
-                if (selectedPlan) {
-                    planInput.value = selectedPlan.id;
-                    planName.textContent = selectedPlan.name || 'Plano escolhido';
-                    planSummary.textContent = selectedPlan.description || '';
+      <section class="card p-6">
+        <h3 class="text-lg font-semibold text-[#4b3f36] mb-4">Alertas Recentes</h3>
+        <div class="space-y-3">
+          <div class="p-4 rounded-md bg-[#fff7f5] border border-[#f5d0cb] text-[#4b3f36]">
+            ⚠️ Carlos Souza não registra medicação há 3 dias.
+          </div>
+          <div class="p-4 rounded-md bg-[#fffbea] border border-[#f2e3b3] text-[#4b3f36]">
+            ⚠️ Maria Oliveira perdeu sessão de exercícios ontem.
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
 
-                    const features = (selectedPlan.features || []).slice(0, 6);
-
-                    if (features.length > 0) {
-                        features.forEach(feature => {
-                            const item = document.createElement('li');
-                            item.textContent = feature.name || '';
-                            planFeatures.appendChild(item);
-                        });
-                    } else {
-                        const empty = document.createElement('li');
-                        empty.textContent = 'Plano completo para acompanhamento longitudinal.';
-                        planFeatures.appendChild(empty);
-                    }
-                } else {
-                    planName.textContent = 'Selecione um plano';
-                    planSummary.textContent = '';
-                    planInput.value = '';
-                }
-            }
-
-            overlay.classList.remove('hidden');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        };
-
-        const closeModal = () => {
-            overlay.classList.add('hidden');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        };
-
-        scrollButtons.forEach(button => {
-            button.addEventListener('click', (event) => {
-                event.preventDefault();
-                const targetId = button.getAttribute('data-scroll');
-                const target = document.getElementById(targetId);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth' });
-                }
-            });
-        });
-
-        planButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const planId = button.getAttribute('data-plan-id');
-                openModal(planId);
-            });
-        });
-
-        overlay.addEventListener('click', closeModal);
-        closeBtn.addEventListener('click', closeModal);
-
-        if (planInput.value) {
-            openModal(planInput.value);
-        }
-
-        const hasErrors = @json($errors->any());
-        if (hasErrors && !planInput.value && plans.length > 0) {
-            openModal(plans[0].id);
-        }
+  <script>
+    const evolucaoCtx = document.getElementById('evolucaoChart').getContext('2d');
+    new Chart(evolucaoCtx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul'],
+        datasets: [{
+          label: 'Pacientes Ativos',
+          data: [120, 135, 128, 142, 150, 160, 155],
+          borderColor: '#9fc5e8',
+          backgroundColor: 'rgba(159, 197, 232, 0.3)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5,
+          pointBackgroundColor: '#9fc5e8'
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } } }
     });
-</script>
+
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Em dia', 'Atenção', 'Crítico'],
+        datasets: [{
+          data: [85, 40, 25],
+          backgroundColor: ['#b6d7a8', '#ffe599', '#f4cccc'],
+          borderWidth: 1
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  </script>
 </body>
 </html>
