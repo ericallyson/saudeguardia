@@ -204,9 +204,14 @@ class SettingsController extends Controller
 
     protected function resolveWebhookUrl(): string
     {
+        $explicit = trim((string) config('services.whatsapp.webhook_url'));
+
+        if ($explicit !== '') {
+            return rtrim($explicit, '/');
+        }
+
         $base = rtrim(config('services.whatsapp.webhook_base', config('app.url')), '/');
-        $path = route('webhooks.whatsapp', [], false);
-        $path = '/' . ltrim($path, '/');
+        $path = '/' . ltrim(route('webhooks.whatsapp', [], false), '/');
 
         return $base . $path;
     }
