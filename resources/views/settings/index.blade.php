@@ -105,8 +105,9 @@
             document.addEventListener('DOMContentLoaded', () => {
                 const statusText = document.getElementById('instance-status-text');
                 const statusIndicator = document.getElementById('status-indicator');
-                const qrImage = document.getElementById('qr-code-image');
-                const qrPlaceholder = document.getElementById('qr-code-placeholder');
+                let qrImage = document.getElementById('qr-code-image');
+                let qrPlaceholder = document.getElementById('qr-code-placeholder');
+                const qrWrapper = document.getElementById('qr-code-wrapper');
                 const connectForm = document.getElementById('connect-form');
                 const disconnectForm = document.getElementById('disconnect-form');
 
@@ -137,6 +138,43 @@
                     return connectedStatuses.includes(status);
                 };
 
+                const updateQrCode = (qrCode) => {
+                    if (!qrWrapper) {
+                        return;
+                    }
+
+                    if (qrCode) {
+                        if (!qrImage) {
+                            qrImage = document.createElement('img');
+                            qrImage.id = 'qr-code-image';
+                            qrImage.alt = 'QR Code do WhatsApp';
+                            qrImage.className = 'border border-gray-200 rounded-xl shadow-lg max-w-xs';
+
+                            if (qrPlaceholder) {
+                                qrWrapper.replaceChild(qrImage, qrPlaceholder);
+                                qrPlaceholder = null;
+                            } else {
+                                qrWrapper.prepend(qrImage);
+                            }
+                        }
+
+                        qrImage.src = qrCode;
+                    } else {
+                        if (qrImage) {
+                            qrImage.remove();
+                            qrImage = null;
+                        }
+
+                        if (!qrPlaceholder) {
+                            qrPlaceholder = document.createElement('div');
+                            qrPlaceholder.id = 'qr-code-placeholder';
+                            qrPlaceholder.className = 'text-gray-500 text-sm';
+                            qrPlaceholder.textContent = 'QR Code indisponível no momento. Aguarde enquanto carregamos as informações.';
+                            qrWrapper.prepend(qrPlaceholder);
+                        }
+                    }
+                };
+
                 const applyStatus = (status, label, meta = {}) => {
                     statusText.textContent = label ?? 'Status indisponível';
 
@@ -156,27 +194,12 @@
                         }
                     }
 
-                    let qrCode = null;
+                    const qrCode = meta && typeof meta === 'object' ? meta.qr_code_base64 ?? null : null;
 
-                    if (meta && typeof meta === 'object') {
-                        if (meta.qr_code_base64) {
-                            qrCode = meta.qr_code_base64;
-                        } else if (meta.data && meta.data.qr_code_base64) {
-                            qrCode = meta.data.qr_code_base64;
-                        }
-                    }
-
-                    if (qrCode) {
-                        if (qrImage) {
-                            qrImage.src = qrCode;
-                        } else if (qrPlaceholder) {
-                            const newImg = document.createElement('img');
-                            newImg.id = 'qr-code-image';
-                            newImg.src = qrCode;
-                            newImg.alt = 'QR Code do WhatsApp';
-                            newImg.className = 'border border-gray-200 rounded-xl shadow-lg max-w-xs';
-                            qrPlaceholder.replaceWith(newImg);
-                        }
+                    if (status === 'qr_code') {
+                        updateQrCode(qrCode);
+                    } else {
+                        updateQrCode(null);
                     }
                 };
 
@@ -213,7 +236,10 @@
                 applyStatus(
                     @json($initialStatus),
                     @json($initialStatusLabel ?? 'Status indisponível'),
-                    { connected: @json($initialIsConnected) }
+                    {
+                        connected: @json($initialIsConnected),
+                        qr_code_base64: @json($qrCode)
+                    }
                 );
 
                 fetchStatus();
