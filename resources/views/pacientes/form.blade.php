@@ -389,19 +389,19 @@
             </div>
         </div>
 
-        <div id="meta-entry-template" class="hidden">
+        <template id="meta-entry-template">
             @include('pacientes.partials.meta-entry', [
                 'index' => '__INDEX__',
                 'metaSelecionada' => [
                     'meta_id' => '',
                     'vencimento' => '',
-                'horarios' => ['09:00'],
+                    'horarios' => ['09:00'],
                     'dias_semana' => [],
                 ],
                 'metas' => $metas,
                 'diasSemanaOptions' => $diasSemanaOptions,
             ])
-        </div>
+        </template>
     </div>
 
     <div class="card p-6">
