@@ -138,7 +138,7 @@ class SubscriptionClient
         $base = Arr::get($this->config, 'base_url');
 
         if (is_string($base) && $base !== '') {
-            $base = $this->normalizeBaseUrl($base);
+            $base = $this->ensureApiSuffix($this->normalizeBaseUrl($base));
             $base = trim($base);
 
             if ($base !== '') {
@@ -146,7 +146,7 @@ class SubscriptionClient
             }
         }
 
-        return rtrim(self::DEFAULT_BASE_URL, '/');
+        return rtrim($this->ensureApiSuffix(self::DEFAULT_BASE_URL), '/');
     }
 
     protected function normalizeBaseUrl(string $url): string
@@ -157,6 +157,19 @@ class SubscriptionClient
     protected function makeUrl(string $path): string
     {
         return $this->baseUrl().'/'.ltrim($path, '/');
+    }
+
+    protected function ensureApiSuffix(string $url): string
+    {
+        $url = rtrim($url, '/');
+
+        $path = parse_url($url, PHP_URL_PATH);
+
+        if ($path === null || $path === '' || $path === '/') {
+            return $url.'/api';
+        }
+
+        return $url;
     }
 
     protected function rememberRequest(string $method, string $path, array $parameters, string $operation, Response $response): void
