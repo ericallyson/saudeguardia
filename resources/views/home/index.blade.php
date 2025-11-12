@@ -21,8 +21,9 @@
 </head>
 <body class="font-inter bg-gray-50">
     @php
-        $oldPlanId = old('plan_id');
-        $previouslySelectedPlan = $oldPlanId ? collect($plans)->firstWhere('id', (int) $oldPlanId) : null;
+        $requestedPlanId = $selectedPlanId ?? null;
+        $currentPlanId = old('plan_id', $requestedPlanId);
+        $previouslySelectedPlan = $currentPlanId ? collect($plans)->firstWhere('id', (int) $currentPlanId) : null;
         $billingLabels = [
             'monthly' => 'mês',
             'yearly' => 'ano',
@@ -51,7 +52,8 @@
             }
         }
 
-        $shouldOpenRegistrationModal = $errors->any();
+        $shouldOpenRegistrationModal = $errors->any() || ($previouslySelectedPlan && ($shouldOpenRegistration ?? false));
+        $currentPlanValue = $previouslySelectedPlan['id'] ?? $currentPlanId ?? '';
     @endphp
     <!-- Header/Navigation -->
     <header class="bg-white shadow-sm fixed w-full top-0 z-50">
@@ -372,14 +374,14 @@
                             @endforelse
                         </ul>
 
-                        <button type="button"
+                        <a href="{{ route('home', ['plan' => $plan['id'], 'register' => 1]) }}"
                             class="block w-full {{ $isFeatured ? 'bg-white text-amber-600 hover:bg-gray-100' : 'bg-gray-200 text-gray-800 hover:bg-gray-300' }} text-center py-3 rounded-lg font-semibold transition-colors plan-select-button"
                             data-plan-id="{{ $plan['id'] }}"
                             data-plan-name="{{ $plan['name'] ?? 'Plano' }}"
                             data-plan-summary="{{ $planSummary }}"
                             data-plan-trial="{{ $trialDays > 0 ? ($trialDays === 1 ? '1 dia de teste' : sprintf('%d dias de teste', $trialDays)) : '' }}">
                             Começar Agora
-                        </button>
+                        </a>
                     </div>
                 @empty
                     <div class="md:col-span-2 lg:col-span-3">
@@ -431,7 +433,7 @@
 
                 <form method="POST" action="{{ route('home.register') }}" class="space-y-6" id="plan-registration-form">
                     @csrf
-                    <input type="hidden" name="plan_id" id="selected-plan-id" value="{{ old('plan_id', $previouslySelectedPlan['id'] ?? '') }}">
+                    <input type="hidden" name="plan_id" id="selected-plan-id" value="{{ $currentPlanValue }}">
 
                     <div class="grid md:grid-cols-2 gap-6">
                         <div>

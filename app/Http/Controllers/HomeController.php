@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Subscriptions\SubscriptionClient;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +24,7 @@ class HomeController extends Controller
     {
     }
 
-    public function index(): View|RedirectResponse
+    public function index(Request $request): View|RedirectResponse
     {
         if (Auth::check()) {
             return redirect()->route('dashboard');
@@ -31,17 +32,31 @@ class HomeController extends Controller
 
         $plans = [];
         $plansError = null;
+        $requestedPlanId = $request->integer('plan');
+        $shouldOpenRegistration = false;
 
         try {
             $plans = $this->subscriptions->listPlans();
+
+            if ($requestedPlanId) {
+                $selectedPlanExists = collect($plans)->contains(fn ($plan) => (int) ($plan['id'] ?? 0) === $requestedPlanId);
+                $shouldOpenRegistration = $selectedPlanExists && $request->boolean('register', true);
+
+                if (! $selectedPlanExists) {
+                    $requestedPlanId = null;
+                }
+            }
         } catch (SubscriptionException $exception) {
             Log::warning('Unable to fetch subscription plans for landing page', $exception->context());
             $plansError = 'Não foi possível carregar os planos no momento. Tente novamente mais tarde.';
+            $requestedPlanId = null;
         }
 
         return view('home.index', [
             'plans' => $plans,
             'plansError' => $plansError,
+            'selectedPlanId' => $requestedPlanId,
+            'shouldOpenRegistration' => $shouldOpenRegistration,
         ]);
     }
 
