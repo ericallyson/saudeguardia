@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Http;
 
 class SubscriptionClient
 {
+    protected const DEFAULT_BASE_URL = 'https://assinaturas.saudeguardia.com.br/api';
     /**
      * @var array<string, mixed>
      */
@@ -134,9 +135,23 @@ class SubscriptionClient
 
     protected function baseUrl(): string
     {
-        $base = Arr::get($this->config, 'base_url', 'https://assinaturas.saudeguardia.com.br/api');
+        $base = Arr::get($this->config, 'base_url');
 
-        return rtrim($base, '/');
+        if (is_string($base) && $base !== '') {
+            $base = $this->normalizeBaseUrl($base);
+            $base = trim($base);
+
+            if ($base !== '') {
+                return rtrim($base, '/');
+            }
+        }
+
+        return rtrim(self::DEFAULT_BASE_URL, '/');
+    }
+
+    protected function normalizeBaseUrl(string $url): string
+    {
+        return str_replace('saudegaurdia.com.br', 'saudeguardia.com.br', $url);
     }
 
     protected function makeUrl(string $path): string
