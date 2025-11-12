@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'whatsapp_instance_uuid',
         'whatsapp_instance_status',
+        'whatsapp_qr_code_base64',
         'subscription_customer_id',
         'subscription_id',
         'subscription_plan_id',

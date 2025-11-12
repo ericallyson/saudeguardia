@@ -18,7 +18,7 @@ class SettingsController extends Controller
 
         return view('settings.index', [
             'user' => $user,
-            'qrCode' => session('whatsapp_qr_code'),
+            'qrCode' => $user->whatsapp_qr_code_base64,
             'initialStatus' => $currentStatus,
             'initialStatusLabel' => $this->humanReadableStatus($currentStatus),
             'initialIsConnected' => $this->isConnectedStatus($currentStatus),
@@ -79,11 +79,11 @@ class SettingsController extends Controller
         $user->forceFill([
             'whatsapp_instance_uuid' => $data['uuid'],
             'whatsapp_instance_status' => Arr::get($data, 'status'),
+            'whatsapp_qr_code_base64' => Arr::get($data, 'qr_code_base64'),
         ])->save();
 
         return redirect()
             ->route('settings.index')
-            ->with('whatsapp_qr_code', Arr::get($data, 'qr_code_base64'))
             ->with('status', 'Instância criada com sucesso! Faça a leitura do QR Code para conectar.');
     }
 
@@ -124,6 +124,7 @@ class SettingsController extends Controller
 
         $user->forceFill([
             'whatsapp_instance_status' => is_string($status) ? $status : 'connecting',
+            'whatsapp_qr_code_base64' => null,
         ])->save();
 
         return redirect()
@@ -168,6 +169,7 @@ class SettingsController extends Controller
 
         $user->forceFill([
             'whatsapp_instance_status' => is_string($status) ? $status : 'disconnected',
+            'whatsapp_qr_code_base64' => null,
         ])->save();
 
         return redirect()
@@ -191,6 +193,7 @@ class SettingsController extends Controller
             'status' => $user->whatsapp_instance_status,
             'status_label' => $this->humanReadableStatus($user->whatsapp_instance_status),
             'connected' => $this->isConnectedStatus($user->whatsapp_instance_status),
+            'qr_code_base64' => $user->whatsapp_qr_code_base64,
         ]);
     }
 
