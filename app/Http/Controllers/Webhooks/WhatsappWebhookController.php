@@ -20,6 +20,7 @@ class WhatsappWebhookController extends Controller
         if ($request->input('event') === 'connection.update') {
             $instanceUuid = $request->input('instance_uuid');
             $status = Arr::get($request->input('data', []), 'status');
+            $qrCode = $this->extractQrCode($request);
 
             if (! $instanceUuid) {
                 Log::warning('Webhook de conexão recebido sem UUID da instância.');
@@ -35,9 +36,17 @@ class WhatsappWebhookController extends Controller
                         'instance_uuid' => $instanceUuid,
                     ]);
                 } else {
-                    $user->forceFill([
+                    $updates = [
                         'whatsapp_instance_status' => $status,
-                    ])->save();
+                    ];
+
+                    if ($qrCode !== null) {
+                        $updates['whatsapp_qr_code_base64'] = $qrCode;
+                    } elseif ($status && $status !== 'qr_code') {
+                        $updates['whatsapp_qr_code_base64'] = null;
+                    }
+
+                    $user->forceFill($updates)->save();
 
                     Log::info('Status da instância do WhatsApp atualizado via webhook.', [
                         'user_id' => $user->id,
@@ -49,5 +58,29 @@ class WhatsappWebhookController extends Controller
         }
 
         return response()->json(['received' => true]);
+    }
+
+    private function extractQrCode(Request $request): ?string
+    {
+        $payload = $request->input('data', []);
+
+        $candidates = [
+            Arr::get($payload, 'qr_code_base64'),
+            Arr::get($payload, 'qrCodeBase64'),
+            Arr::get($payload, 'qr_code'),
+            Arr::get($payload, 'qrcode'),
+            $request->input('qr_code_base64'),
+            $request->input('qrCodeBase64'),
+            $request->input('qr_code'),
+            $request->input('qrcode'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (is_string($candidate) && $candidate !== '') {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 }
