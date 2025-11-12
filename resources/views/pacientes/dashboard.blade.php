@@ -3,6 +3,8 @@
 @section('title', 'Dashboard do paciente — Saúde Guardiã')
 
 @section('main')
+    @php($metaTipos = \App\Models\Meta::TIPOS)
+
     <div class="flex items-center justify-between mb-8">
         <div>
             <a href="{{ route('pacientes.index') }}" class="text-sm text-blue-600 hover:text-blue-800">&larr; Voltar para a listagem</a>
@@ -101,6 +103,42 @@
         </div>
     </div>
 
+    <div class="mt-10">
+        <div class="flex flex-col gap-2 mb-6">
+            <h2 class="text-xl font-semibold text-[#2d3a4d]">Histórico das metas do paciente</h2>
+            <p class="text-sm text-gray-500">Visualize o preenchimento diário e a evolução de cada meta acompanhada.</p>
+        </div>
+
+        @if ($metaCharts->isEmpty())
+            <div class="card p-6">
+                <p class="text-sm text-gray-500">Ainda não há respostas registradas para as metas deste paciente.</p>
+            </div>
+        @else
+            <div class="grid gap-6 xl:grid-cols-2">
+                @foreach ($metaCharts as $metaChart)
+                    <div class="card p-6">
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-[#2d3a4d]">{{ $metaChart['nome'] }}</h3>
+                                <p class="text-xs uppercase tracking-wide text-slate-400">
+                                    {{ $metaTipos[$metaChart['tipo']] ?? ucfirst($metaChart['tipo']) }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 h-64">
+                            <canvas id="meta-chart-{{ $metaChart['meta_id'] }}"></canvas>
+                        </div>
+
+                        @if (! $metaChart['has_data'])
+                            <p class="mt-4 text-sm text-gray-500">Ainda não há respostas registradas para esta meta.</p>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    </div>
+
     <div class="mt-10 card p-6">
         <div class="mb-6 flex items-center justify-between">
             <div>
@@ -131,6 +169,8 @@
         @endforelse
     </div>
 @endsection
+
+@include('partials.meta_charts_script', ['metaCharts' => $metaCharts, 'chartPrefix' => 'meta-chart'])
 
 @push('scripts')
     <script>

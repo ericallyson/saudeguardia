@@ -35,7 +35,7 @@ class Meta extends Model
     public function pacientes(): BelongsToMany
     {
         return $this->belongsToMany(Paciente::class, 'meta_paciente')
-            ->withPivot(['periodicidade', 'vencimento'])
+            ->withPivot(['id', 'vencimento', 'horario', 'horarios', 'dias_semana'])
             ->withTimestamps();
     }
 

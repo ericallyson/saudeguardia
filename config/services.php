@@ -35,4 +35,18 @@ return [
         ],
     ],
 
+    'whatsapp' => [
+        'token' => env('WHATSAPP_API_TOKEN', 'hhjSsIvJIaVRniUlHgn1UjFe26tOt0bS'),
+        'send_text_url' => env('WHATSAPP_SEND_TEXT_URL', 'https://api-whatsapp.api-alisson.com.br/api/v1/message/send-text'),
+        'send_document_url' => env('WHATSAPP_SEND_DOCUMENT_URL', 'https://api-whatsapp.api-alisson.com.br/api/v1/message/send-document'),
+        'webhook_base' => env('WHATSAPP_WEBHOOK_BASE', 'https://app.saudegaurdia.com.br'),
+    ],
+
+    'subscriptions' => [
+        'base_url' => env('SUBSCRIPTIONS_BASE_URL', 'https://assinaturas.saudeguardia.com.br/api'),
+        'default_plan_id' => env('SUBSCRIPTIONS_DEFAULT_PLAN_ID'),
+        'default_status' => env('SUBSCRIPTIONS_DEFAULT_STATUS', 'active'),
+        'default_price' => env('SUBSCRIPTIONS_DEFAULT_PRICE'),
+    ],
+
 ];

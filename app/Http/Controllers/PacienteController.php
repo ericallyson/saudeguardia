@@ -6,17 +6,36 @@ use App\Models\Meta;
 use App\Models\Paciente;
 use App\Services\MetaMessageService;
 use App\Services\PacienteDashboardService;
+use App\Services\PatientReportPdfBuilder;
+use App\Services\WhatsappService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
+use Throwable;
 
 class PacienteController extends Controller
 {
+    private const DIAS_SEMANA = [
+        'monday' => 'Segunda-feira',
+        'tuesday' => 'Terça-feira',
+        'wednesday' => 'Quarta-feira',
+        'thursday' => 'Quinta-feira',
+        'friday' => 'Sexta-feira',
+        'saturday' => 'Sábado',
+        'sunday' => 'Domingo',
+    ];
+
     public function __construct(
         private readonly MetaMessageService $metaMessageService,
         private readonly PacienteDashboardService $dashboardService,
+        private readonly WhatsappService $whatsappService,
+        private readonly PatientReportPdfBuilder $reportPdfBuilder,
     )
     {
     }
@@ -24,26 +43,33 @@ class PacienteController extends Controller
     /**
      * Display a listing of the patients.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $pacientes = Paciente::latest()->paginate(10);
+        $pacientes = $request->user()
+            ->pacientes()
+            ->latest()
+            ->paginate(10);
 
         return view('pacientes.index', compact('pacientes'));
     }
 
-    public function dashboard(Paciente $paciente): View
+    public function dashboard(Request $request, Paciente $paciente): View
     {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
         $paciente->load('metas');
 
         $engajamento = $this->dashboardService->calcularEngajamento($paciente);
         $andamento = $this->dashboardService->calcularAndamentoTratamento($paciente);
         $metasFuturas = $this->dashboardService->listarMetasFuturas($paciente);
+        $metaCharts = $this->dashboardService->construirGraficosMetas($paciente);
 
         return view('pacientes.dashboard', [
             'paciente' => $paciente,
             'engajamento' => $engajamento,
             'andamento' => $andamento,
             'metasFuturas' => $metasFuturas,
+            'metaCharts' => $metaCharts,
         ]);
     }
 
@@ -52,9 +78,13 @@ class PacienteController extends Controller
      */
     public function create(): View
     {
-        $metas = Meta::orderBy('nome')->get();
+        $metas = Meta::query()
+            ->orderBy('nome')
+            ->get(['id', 'nome']);
 
-        return view('pacientes.create', compact('metas'));
+        $diasSemanaOptions = self::DIAS_SEMANA;
+
+        return view('pacientes.create', compact('metas', 'diasSemanaOptions'));
     }
 
     /**
@@ -65,7 +95,7 @@ class PacienteController extends Controller
         $data = $this->validatePaciente($request);
         $metas = $this->validatePacienteMetas($request);
 
-        $paciente = Paciente::create($data);
+        $paciente = $request->user()->pacientes()->create($data);
 
         $this->syncPacienteMetas($paciente, $metas);
         $this->metaMessageService->rebuildForPaciente($paciente);
@@ -76,12 +106,18 @@ class PacienteController extends Controller
     /**
      * Show the form for editing the specified patient.
      */
-    public function edit(Paciente $paciente): View
+    public function edit(Request $request, Paciente $paciente): View
     {
-        $paciente->load('metas');
-        $metas = Meta::orderBy('nome')->get();
+        $this->ensurePacienteBelongsToUser($request, $paciente);
 
-        return view('pacientes.edit', compact('paciente', 'metas'));
+        $paciente->load('metas');
+        $metas = Meta::query()
+            ->orderBy('nome')
+            ->get(['id', 'nome']);
+
+        $diasSemanaOptions = self::DIAS_SEMANA;
+
+        return view('pacientes.edit', compact('paciente', 'metas', 'diasSemanaOptions'));
     }
 
     /**
@@ -89,6 +125,8 @@ class PacienteController extends Controller
      */
     public function update(Request $request, Paciente $paciente): RedirectResponse
     {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
         $data = $this->validatePaciente($request);
         $metas = $this->validatePacienteMetas($request);
 
@@ -102,11 +140,90 @@ class PacienteController extends Controller
     /**
      * Remove the specified patient from storage.
      */
-    public function destroy(Paciente $paciente): RedirectResponse
+    public function destroy(Request $request, Paciente $paciente): RedirectResponse
     {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
         $paciente->delete();
 
         return redirect()->route('pacientes.index')->with('success', 'Paciente removido com sucesso.');
+    }
+
+    public function enviarAcompanhamento(Request $request, Paciente $paciente): RedirectResponse
+    {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
+        $numero = $paciente->whatsapp_numero ?: $paciente->telefone;
+
+        if (! $numero) {
+            return redirect()
+                ->back()
+                ->with('error', 'Cadastre um número de WhatsApp para o paciente antes de enviar o acompanhamento.');
+        }
+
+        $user = $request->user();
+
+        if (! $user->whatsapp_instance_uuid) {
+            return redirect()
+                ->back()
+                ->with('error', 'Conecte sua instância de WhatsApp nas configurações para enviar acompanhamentos.');
+        }
+
+        $paciente->load('metas');
+
+        $engajamento = $this->dashboardService->calcularEngajamento($paciente);
+        $andamento = $this->dashboardService->calcularAndamentoTratamento($paciente);
+        $metasFuturas = $this->dashboardService->listarMetasFuturas($paciente)->take(10);
+
+        $reportUrl = URL::temporarySignedRoute(
+            'pacientes.relatorios.publico',
+            Carbon::now()->addDays(7),
+            ['paciente' => $paciente],
+        );
+
+        $fileName = sprintf(
+            'relatorio-%s-%s.pdf',
+            Str::slug($paciente->nome ?: 'paciente'),
+            Carbon::now()->format('YmdHis'),
+        );
+
+        $caption = sprintf(
+            'Relatório de acompanhamento de %s. Veja mais em: %s',
+            $paciente->nome,
+            $reportUrl,
+        );
+
+        try {
+            $pdfContents = $this->reportPdfBuilder->build(
+                $paciente,
+                $engajamento,
+                $andamento,
+                $metasFuturas,
+                $reportUrl,
+            );
+
+            $this->whatsappService->sendDocument(
+                $user,
+                $numero,
+                $fileName,
+                $caption,
+                $pdfContents,
+            );
+        } catch (Throwable $exception) {
+            Log::error('Erro ao enviar relatório de acompanhamento via WhatsApp.', [
+                'paciente_id' => $paciente->id,
+                'user_id' => $user->id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Não foi possível enviar o relatório de acompanhamento. Tente novamente mais tarde.');
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', 'Relatório de acompanhamento enviado com sucesso pelo WhatsApp.');
     }
 
     /**
@@ -137,35 +254,54 @@ class PacienteController extends Controller
     protected function validatePacienteMetas(Request $request): array
     {
         $metasRequest = $request->input('metas', []);
-        $metasDisponiveis = Meta::pluck('id')->all();
-        $periodicidadesValidas = array_keys(Meta::PERIODICIDADES);
+
+        if (! is_array($metasRequest)) {
+            return [];
+        }
+
+        $metasDisponiveis = Meta::pluck('id')->map(fn ($id) => (int) $id)->all();
+        $diasValidos = array_keys(self::DIAS_SEMANA);
 
         $metasValidadas = [];
 
-        foreach ($metasRequest as $metaId => $metaDados) {
-            if (!in_array((int) $metaId, $metasDisponiveis, true)) {
-                continue;
-            }
-
-            $selecionada = filter_var($metaDados['selected'] ?? false, FILTER_VALIDATE_BOOLEAN);
-
-            if (! $selecionada) {
+        foreach (array_values($metasRequest) as $metaDados) {
+            if (! is_array($metaDados)) {
                 continue;
             }
 
             $validator = Validator::make($metaDados, [
-                'periodicidade' => ['required', Rule::in($periodicidadesValidas)],
-                'vencimento' => ['required', 'date'],
+                'meta_id' => ['required', Rule::in($metasDisponiveis)],
+                'vencimento' => ['nullable', 'date'],
+                'horarios' => ['required', 'array', 'min:1', 'max:3'],
+                'horarios.*' => ['required', 'date_format:H:i'],
+                'dias_semana' => ['required', 'array', 'min:1'],
+                'dias_semana.*' => ['required', Rule::in($diasValidos)],
             ], [], [
-                'periodicidade' => 'periodicidade da meta',
-                'vencimento' => 'vencimento da meta',
+                'meta_id' => 'meta',
+                'vencimento' => 'vencimento',
+                'horarios' => 'horários',
+                'dias_semana' => 'dias da semana',
             ]);
 
             $dadosValidados = $validator->validate();
 
-            $metasValidadas[(int) $metaId] = [
-                'periodicidade' => $dadosValidados['periodicidade'],
+            $horarios = collect($dadosValidados['horarios'])
+                ->filter(fn ($horario) => is_string($horario) && $horario !== '')
+                ->map(fn ($horario) => substr($horario, 0, 5))
+                ->filter(fn ($horario) => preg_match('/^\d{2}:\d{2}$/', $horario) === 1)
+                ->unique()
+                ->values()
+                ->all();
+
+            if (empty($horarios)) {
+                continue;
+            }
+
+            $metasValidadas[] = [
+                'meta_id' => (int) $dadosValidados['meta_id'],
                 'vencimento' => $dadosValidados['vencimento'] ?? null,
+                'horarios' => $horarios,
+                'dias_semana' => array_values(array_unique($dadosValidados['dias_semana'])),
             ];
         }
 
@@ -174,15 +310,36 @@ class PacienteController extends Controller
 
     protected function syncPacienteMetas(Paciente $paciente, array $metas): void
     {
-        $syncData = [];
+        $paciente->metas()->detach();
 
-        foreach ($metas as $metaId => $metaDados) {
-            $syncData[$metaId] = [
-                'periodicidade' => $metaDados['periodicidade'],
+        foreach ($metas as $metaDados) {
+            $horarios = $metaDados['horarios'];
+            $paciente->metas()->attach($metaDados['meta_id'], [
                 'vencimento' => $metaDados['vencimento'] ?: null,
-            ];
+                'horario' => $horarios[0] ?? null,
+                'horarios' => json_encode($horarios),
+                'dias_semana' => json_encode($metaDados['dias_semana']),
+            ]);
         }
+    }
 
-        $paciente->metas()->sync($syncData);
+    public function cancelarMetas(Request $request, Paciente $paciente): RedirectResponse
+    {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
+        $paciente->metaMessages()
+            ->where('data_envio', '>=', Carbon::now())
+            ->delete();
+
+        return redirect()
+            ->route('pacientes.edit', $paciente)
+            ->with('success', 'Metas futuras canceladas com sucesso.');
+    }
+
+    private function ensurePacienteBelongsToUser(Request $request, Paciente $paciente): void
+    {
+        if ($paciente->user_id !== $request->user()->id) {
+            abort(404);
+        }
     }
 }

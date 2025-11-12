@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Paciente extends Model
 {
@@ -28,6 +30,7 @@ class Paciente extends Model
         'atividade_fisica',
         'whatsapp_numero',
         'whatsapp_frequencia',
+        'user_id',
     ];
 
     protected $casts = [
@@ -38,11 +41,30 @@ class Paciente extends Model
         'peso_meta' => 'decimal:2',
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (Paciente $paciente): void {
+            if (! $paciente->uuid) {
+                $paciente->uuid = (string) Str::uuid();
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
+
     public function metas(): BelongsToMany
     {
         return $this->belongsToMany(Meta::class, 'meta_paciente')
-            ->withPivot(['periodicidade', 'vencimento'])
+            ->withPivot(['id', 'vencimento', 'horario', 'horarios', 'dias_semana'])
             ->withTimestamps();
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function metaMessages(): HasMany

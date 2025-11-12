@@ -19,11 +19,13 @@ class MetaMessage extends Model
         'token',
         'data_envio',
         'status',
+        'enviado_em',
         'respondido_em',
     ];
 
     protected $casts = [
         'data_envio' => 'datetime',
+        'enviado_em' => 'datetime',
         'respondido_em' => 'datetime',
     ];
 

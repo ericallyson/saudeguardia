@@ -27,6 +27,9 @@ class MetaResponseController extends Controller
         $meta = $message->meta;
         $showChart = $message->status === 'respondido';
         $engajamento = $showChart ? $this->dashboardService->calcularEngajamento($paciente) : null;
+        $metaCharts = $showChart
+            ? $this->dashboardService->construirGraficosMetas($paciente, $meta)
+            : collect();
 
         return view('metas.responder', [
             'metaMessage' => $message,
@@ -34,6 +37,7 @@ class MetaResponseController extends Controller
             'meta' => $meta,
             'showChart' => $showChart,
             'engajamento' => $engajamento,
+            'metaCharts' => $metaCharts,
         ]);
     }
 
@@ -71,6 +75,7 @@ class MetaResponseController extends Controller
         $paciente = $message->paciente;
 
         $engajamento = $this->dashboardService->calcularEngajamento($paciente);
+        $metaCharts = $this->dashboardService->construirGraficosMetas($paciente, $meta);
 
         return view('metas.responder', [
             'metaMessage' => $message,
@@ -78,6 +83,7 @@ class MetaResponseController extends Controller
             'meta' => $meta,
             'showChart' => true,
             'engajamento' => $engajamento,
+            'metaCharts' => $metaCharts,
         ]);
     }
 

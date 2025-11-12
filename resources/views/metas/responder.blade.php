@@ -28,11 +28,28 @@
                     </div>
                 </div>
             </div>
+
+            @php($metaChartAtual = $metaCharts->first())
+
+            @if ($metaChartAtual)
+                <div class="bg-white/80 border border-indigo-100 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-slate-800">Histórico da meta</h3>
+                    <p class="text-sm text-slate-500 mt-1">Acompanhe seus registros diários para esta meta.</p>
+                    <div class="mt-4 h-64">
+                        <canvas id="meta-response-chart-{{ $metaChartAtual['meta_id'] }}"></canvas>
+                    </div>
+                    @if (! $metaChartAtual['has_data'])
+                        <p class="mt-4 text-sm text-slate-500">Você ainda não registrou respostas anteriores para esta meta.</p>
+                    @endif
+                </div>
+            @endif
         @else
             <form method="POST" action="{{ route('metas.responder.store', $metaMessage->token) }}" class="space-y-6">
                 @csrf
                 <div class="space-y-2">
-                    <label for="valor" class="block text-sm font-medium text-slate-700">Como você está indo com esta meta?</label>
+                    <label for="valor" class="block text-sm font-medium text-slate-700">
+                        {{ filled($meta->descricao) ? $meta->descricao : 'Como você está indo com esta meta?' }}
+                    </label>
                     @include('metas.responder_campos', ['meta' => $meta, 'valorAnterior' => old('valor')])
                     @error('valor')
                         <p class="text-sm text-red-600">{{ $message }}</p>
@@ -47,6 +64,8 @@
         <p class="text-xs text-slate-400 text-center">Este link é exclusivo e seguro. Em caso de dúvidas, fale com sua equipe Saúde Guardiã.</p>
     </div>
 @endsection
+
+@includeWhen($metaCharts->isNotEmpty(), 'partials.meta_charts_script', ['metaCharts' => $metaCharts, 'chartPrefix' => 'meta-response-chart'])
 
 @push('scripts')
     @if ($showChart)
