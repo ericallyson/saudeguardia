@@ -36,13 +36,15 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::resource('metas', MetaController::class)->except('show');
-    Route::get('pacientes/{paciente}/dashboard', [PacienteController::class, 'dashboard'])
+    Route::get('pacientes/{paciente:uuid}/dashboard', [PacienteController::class, 'dashboard'])
         ->name('pacientes.dashboard');
-    Route::post('pacientes/{paciente}/cancelar-metas', [PacienteController::class, 'cancelarMetas'])
+    Route::post('pacientes/{paciente:uuid}/cancelar-metas', [PacienteController::class, 'cancelarMetas'])
         ->name('pacientes.cancelar-metas');
-    Route::post('pacientes/{paciente}/enviar-acompanhamento', [PacienteController::class, 'enviarAcompanhamento'])
+    Route::post('pacientes/{paciente:uuid}/enviar-acompanhamento', [PacienteController::class, 'enviarAcompanhamento'])
         ->name('pacientes.enviar-acompanhamento');
-    Route::resource('pacientes', PacienteController::class)->except('show');
+    Route::resource('pacientes', PacienteController::class)
+        ->except('show')
+        ->scoped(['paciente' => 'uuid']);
 
     Route::get('configuracoes', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('configuracoes/instancia', [SettingsController::class, 'createInstance'])->name('settings.instance.create');
