@@ -23,6 +23,24 @@ class SubscriptionClient
     }
 
     /**
+     * @return array<int, array<string, mixed>>
+     *
+     * @throws SubscriptionException
+     */
+    public function listPlans(): array
+    {
+        $path = '/plans';
+        $response = $this->request()->get($path);
+        $this->rememberRequest('GET', $path, [], 'list plans', $response);
+
+        if ($response->failed()) {
+            throw SubscriptionException::failed('list plans', $response, $this->lastRequestContext);
+        }
+
+        return $response->json('data', []);
+    }
+
+    /**
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      *
