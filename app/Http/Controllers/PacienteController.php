@@ -338,7 +338,7 @@ class PacienteController extends Controller
 
     private function ensurePacienteBelongsToUser(Request $request, Paciente $paciente): void
     {
-        if ($paciente->user_id !== $request->user()->id) {
+        if ((int) $paciente->user_id !== (int) $request->user()->getKey()) {
             abort(404);
         }
     }
