@@ -76,7 +76,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-right text-sm">
-                                <div class="flex items-center justify-end gap-4">
+                                <div class="flex flex-wrap items-center justify-end gap-2 sm:gap-4">
                                     <a
                                         href="{{ route('pacientes.dashboard', $paciente) }}"
                                         class="inline-flex items-center text-indigo-600 hover:text-indigo-800"
@@ -96,9 +96,24 @@
                                         @endphp
                                         <button
                                             type="submit"
-                                            class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+                                            class="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                                             @unless($canSend) disabled title="Cadastre um número de WhatsApp para enviar o acompanhamento." @endunless
                                         >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                                stroke-width="1.5"
+                                                stroke="currentColor"
+                                                class="h-4 w-4"
+                                                aria-hidden="true"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    d="M3 8.25l7.5 3.75L21 8.25M3 15.75l7.5-3.75L21 15.75"
+                                                />
+                                            </svg>
                                             Enviar acompanhamento
                                         </button>
                                     </form>
