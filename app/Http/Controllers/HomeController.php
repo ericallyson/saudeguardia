@@ -119,6 +119,7 @@ class HomeController extends Controller
             $subscription = $this->subscriptions->createSubscription($customerId, $subscriptionPayload);
 
             $planData = Arr::get($subscription, 'plan', []);
+            $subscriptionMetadata = Arr::get($subscription, 'metadata', Arr::get($subscriptionPayload, 'metadata'));
 
             $user->forceFill([
                 'subscription_customer_id' => Arr::get($customer, 'id'),
@@ -131,7 +132,7 @@ class HomeController extends Controller
                 'subscription_next_renewal_date' => Arr::get($subscription, 'next_renewal_date', $nextRenewalDate),
                 'subscription_price' => Arr::get($subscription, 'price', $planPrice),
                 'subscription_metadata' => [
-                    'subscription' => Arr::get($subscription, 'metadata'),
+                    'subscription' => $subscriptionMetadata,
                     'plan_features' => Arr::get($planData, 'features', $plan['features'] ?? []),
                 ],
                 'subscription_last_synced_at' => Carbon::now(),
