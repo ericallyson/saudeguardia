@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\User;
 use App\Observers\UserObserver;
+use App\Services\Subscriptions\SubscriptionClient;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +14,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(SubscriptionClient::class, function ($app): SubscriptionClient {
+            return new SubscriptionClient((array) config('services.subscriptions'));
+        });
     }
 
     /**

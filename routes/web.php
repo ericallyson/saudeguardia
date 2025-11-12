@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MetaController;
 use App\Http\Controllers\MetaResponseController;
 use App\Http\Controllers\PacienteController;
@@ -9,7 +10,9 @@ use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Webhooks\WhatsappWebhookController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/login');
+Route::redirect('/', '/home');
+
+Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::get('/metas/responder/{token}', [MetaResponseController::class, 'show'])->name('metas.responder');
 Route::post('/metas/responder/{token}', [MetaResponseController::class, 'store'])->name('metas.responder.store');
@@ -17,6 +20,7 @@ Route::post('/metas/responder/{token}', [MetaResponseController::class, 'store']
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login'])->name('login.attempt');
+    Route::post('/home/register', [HomeController::class, 'register'])->name('home.register');
 });
 
 Route::post('/webhooks/whatsapp', WhatsappWebhookController::class)->name('webhooks.whatsapp');
