@@ -77,10 +77,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const updateUrlWithPlan = (planId) => {
+        if (!window.history || typeof window.history.replaceState !== 'function') {
+            return;
+        }
+
+        const url = new URL(window.location.href);
+
+        if (planId) {
+            url.searchParams.set('plan', planId);
+            url.searchParams.set('register', '1');
+        } else {
+            url.searchParams.delete('plan');
+            url.searchParams.delete('register');
+        }
+
+        window.history.replaceState({}, '', url.toString());
+    };
+
     const closeModal = () => {
         modal.classList.add('hidden');
         modal.setAttribute('aria-hidden', 'true');
         enableScroll();
+        updateUrlWithPlan(null);
     };
 
     const updateTextContent = (element, value) => {
@@ -98,7 +117,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     planButtons.forEach((button) => {
-        button.addEventListener('click', () => {
+        button.addEventListener('click', (event) => {
+            if (event) {
+                event.preventDefault();
+            }
+
             const planId = button.dataset.planId || '';
             const planName = button.dataset.planName || 'Plano';
             const planSummary = button.dataset.planSummary || '';
@@ -115,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateTextContent(planSummaryDisplay, planSummary);
             updateTextContent(planTrialDisplay, planTrial);
 
+            updateUrlWithPlan(planId);
             openModal();
         });
     });

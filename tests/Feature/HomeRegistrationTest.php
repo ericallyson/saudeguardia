@@ -98,6 +98,34 @@ class HomeRegistrationTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_it_preselects_plan_and_opens_modal_from_query_parameters(): void
+    {
+        $plan = [
+            'id' => 3,
+            'name' => 'Plano Essencial',
+            'slug' => 'plano-essencial',
+            'billing_period' => 'monthly',
+            'trial_days' => 14,
+            'prices' => [
+                'monthly' => 89.9,
+            ],
+        ];
+
+        Http::fake([
+            'https://assinaturas.test/api/plans' => Http::response(['data' => [$plan]], 200),
+        ]);
+
+        $response = $this->get(route('home', ['plan' => $plan['id'], 'register' => 1]));
+
+        $response->assertOk();
+        $response->assertViewIs('home.index');
+        $response->assertViewHas('selectedPlanId', $plan['id']);
+        $response->assertViewHas('shouldOpenRegistration', true);
+        $response->assertSee('data-should-open="true"', false);
+        $response->assertSee('id="selected-plan-id" value="3"', false);
+        $response->assertSee('Plano Essencial', false);
+    }
+
     public function test_it_returns_with_error_when_subscription_api_fails(): void
     {
         $plan = [
