@@ -17,7 +17,7 @@
 <div class="w-full max-w-md">
     <div class="bg-white/80 backdrop-blur rounded-2xl shadow-xl p-8">
         <div class="flex flex-col items-center gap-3 mb-8">
-            <img src="{{ asset('images/logo-horizontal.svg') }}" alt="Saúde Guardiã" class="w-48">
+            <img src="https://app.saudeguardia.com.br/img/logo-horizontal.png" alt="Saúde Guardiã" class="w-48">
             <h1 class="text-2xl font-semibold text-[#2d3a4d]">Bem-vindo de volta</h1>
             <p class="text-sm text-[#6b5b51] text-center">Acesse o painel para acompanhar seus pacientes em tempo real.</p>
         </div>

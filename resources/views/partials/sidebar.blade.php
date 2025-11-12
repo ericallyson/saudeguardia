@@ -1,6 +1,6 @@
 <aside class="w-64 bg-gradient-to-b from-[#f3ede1] to-[#fdfbf7] border-r border-[#e3d7c3] p-6 flex flex-col">
     <a href="{{ route('dashboard') }}" class="flex items-center">
-        <img src="{{ asset('images/logo-horizontal.svg') }}" alt="Saúde Guardiã" class="w-auto">
+        <img src="https://app.saudeguardia.com.br/img/logo-horizontal.png" alt="Saúde Guardiã" class="w-auto">
     </a>
     <nav class="mt-6">
         @php
