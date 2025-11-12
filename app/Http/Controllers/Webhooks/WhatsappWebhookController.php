@@ -43,16 +43,14 @@ class WhatsappWebhookController extends Controller
             ]);
         }
 
-        if ($request->input('event') === 'connection.update') {
-            $qrCode = $this->extractQrCode($request);
+        $qrCode = $this->extractQrCode($request);
 
-            if ($qrCode !== null) {
-                $updates['whatsapp_qr_code_base64'] = $qrCode;
-            } elseif (isset($updates['whatsapp_instance_status']) && $updates['whatsapp_instance_status'] !== 'qr_code') {
-                $updates['whatsapp_qr_code_base64'] = null;
-            } elseif (is_string($status) && $status !== '' && $status !== 'qr_code') {
-                $updates['whatsapp_qr_code_base64'] = null;
-            }
+        if ($qrCode !== null) {
+            $updates['whatsapp_qr_code_base64'] = $qrCode;
+        } elseif (isset($updates['whatsapp_instance_status']) && $updates['whatsapp_instance_status'] !== 'qr_code') {
+            $updates['whatsapp_qr_code_base64'] = null;
+        } elseif (is_string($status) && $status !== '' && $status !== 'qr_code') {
+            $updates['whatsapp_qr_code_base64'] = null;
         }
 
         if ($user && $updates !== []) {
