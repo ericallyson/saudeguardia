@@ -6,6 +6,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\MetaController;
 use App\Http\Controllers\MetaResponseController;
 use App\Http\Controllers\PacienteController;
+use App\Http\Controllers\PacienteReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Webhooks\WhatsappWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,10 @@ Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::get('/metas/responder/{token}', [MetaResponseController::class, 'show'])->name('metas.responder');
 Route::post('/metas/responder/{token}', [MetaResponseController::class, 'store'])->name('metas.responder.store');
+
+Route::get('/relatorios/pacientes/{paciente:uuid}', [PacienteReportController::class, 'show'])
+    ->middleware('signed')
+    ->name('pacientes.relatorios.publico');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -35,6 +40,8 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
         ->name('pacientes.dashboard');
     Route::post('pacientes/{paciente}/cancelar-metas', [PacienteController::class, 'cancelarMetas'])
         ->name('pacientes.cancelar-metas');
+    Route::post('pacientes/{paciente}/enviar-acompanhamento', [PacienteController::class, 'enviarAcompanhamento'])
+        ->name('pacientes.enviar-acompanhamento');
     Route::resource('pacientes', PacienteController::class)->except('show');
 
     Route::get('configuracoes', [SettingsController::class, 'index'])->name('settings.index');

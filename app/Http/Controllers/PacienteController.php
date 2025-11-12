@@ -6,12 +6,18 @@ use App\Models\Meta;
 use App\Models\Paciente;
 use App\Services\MetaMessageService;
 use App\Services\PacienteDashboardService;
+use App\Services\PatientReportPdfBuilder;
+use App\Services\WhatsappService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Throwable;
 
 class PacienteController extends Controller
 {
@@ -28,6 +34,8 @@ class PacienteController extends Controller
     public function __construct(
         private readonly MetaMessageService $metaMessageService,
         private readonly PacienteDashboardService $dashboardService,
+        private readonly WhatsappService $whatsappService,
+        private readonly PatientReportPdfBuilder $reportPdfBuilder,
     )
     {
     }
@@ -35,15 +43,20 @@ class PacienteController extends Controller
     /**
      * Display a listing of the patients.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
-        $pacientes = Paciente::latest()->paginate(10);
+        $pacientes = $request->user()
+            ->pacientes()
+            ->latest()
+            ->paginate(10);
 
         return view('pacientes.index', compact('pacientes'));
     }
 
-    public function dashboard(Paciente $paciente): View
+    public function dashboard(Request $request, Paciente $paciente): View
     {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
         $paciente->load('metas');
 
         $engajamento = $this->dashboardService->calcularEngajamento($paciente);
@@ -82,7 +95,7 @@ class PacienteController extends Controller
         $data = $this->validatePaciente($request);
         $metas = $this->validatePacienteMetas($request);
 
-        $paciente = Paciente::create($data);
+        $paciente = $request->user()->pacientes()->create($data);
 
         $this->syncPacienteMetas($paciente, $metas);
         $this->metaMessageService->rebuildForPaciente($paciente);
@@ -93,8 +106,10 @@ class PacienteController extends Controller
     /**
      * Show the form for editing the specified patient.
      */
-    public function edit(Paciente $paciente): View
+    public function edit(Request $request, Paciente $paciente): View
     {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
         $paciente->load('metas');
         $metas = Meta::query()
             ->orderBy('nome')
@@ -110,6 +125,8 @@ class PacienteController extends Controller
      */
     public function update(Request $request, Paciente $paciente): RedirectResponse
     {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
         $data = $this->validatePaciente($request);
         $metas = $this->validatePacienteMetas($request);
 
@@ -123,11 +140,90 @@ class PacienteController extends Controller
     /**
      * Remove the specified patient from storage.
      */
-    public function destroy(Paciente $paciente): RedirectResponse
+    public function destroy(Request $request, Paciente $paciente): RedirectResponse
     {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
         $paciente->delete();
 
         return redirect()->route('pacientes.index')->with('success', 'Paciente removido com sucesso.');
+    }
+
+    public function enviarAcompanhamento(Request $request, Paciente $paciente): RedirectResponse
+    {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
+        $numero = $paciente->whatsapp_numero ?: $paciente->telefone;
+
+        if (! $numero) {
+            return redirect()
+                ->back()
+                ->with('error', 'Cadastre um número de WhatsApp para o paciente antes de enviar o acompanhamento.');
+        }
+
+        $user = $request->user();
+
+        if (! $user->whatsapp_instance_uuid) {
+            return redirect()
+                ->back()
+                ->with('error', 'Conecte sua instância de WhatsApp nas configurações para enviar acompanhamentos.');
+        }
+
+        $paciente->load('metas');
+
+        $engajamento = $this->dashboardService->calcularEngajamento($paciente);
+        $andamento = $this->dashboardService->calcularAndamentoTratamento($paciente);
+        $metasFuturas = $this->dashboardService->listarMetasFuturas($paciente)->take(10);
+
+        $reportUrl = URL::temporarySignedRoute(
+            'pacientes.relatorios.publico',
+            Carbon::now()->addDays(7),
+            ['paciente' => $paciente],
+        );
+
+        $fileName = sprintf(
+            'relatorio-%s-%s.pdf',
+            Str::slug($paciente->nome ?: 'paciente'),
+            Carbon::now()->format('YmdHis'),
+        );
+
+        $caption = sprintf(
+            'Relatório de acompanhamento de %s. Veja mais em: %s',
+            $paciente->nome,
+            $reportUrl,
+        );
+
+        try {
+            $pdfContents = $this->reportPdfBuilder->build(
+                $paciente,
+                $engajamento,
+                $andamento,
+                $metasFuturas,
+                $reportUrl,
+            );
+
+            $this->whatsappService->sendDocument(
+                $user,
+                $numero,
+                $fileName,
+                $caption,
+                $pdfContents,
+            );
+        } catch (Throwable $exception) {
+            Log::error('Erro ao enviar relatório de acompanhamento via WhatsApp.', [
+                'paciente_id' => $paciente->id,
+                'user_id' => $user->id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return redirect()
+                ->back()
+                ->with('error', 'Não foi possível enviar o relatório de acompanhamento. Tente novamente mais tarde.');
+        }
+
+        return redirect()
+            ->back()
+            ->with('success', 'Relatório de acompanhamento enviado com sucesso pelo WhatsApp.');
     }
 
     /**
@@ -227,8 +323,10 @@ class PacienteController extends Controller
         }
     }
 
-    public function cancelarMetas(Paciente $paciente): RedirectResponse
+    public function cancelarMetas(Request $request, Paciente $paciente): RedirectResponse
     {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
         $paciente->metaMessages()
             ->where('data_envio', '>=', Carbon::now())
             ->delete();
@@ -236,5 +334,12 @@ class PacienteController extends Controller
         return redirect()
             ->route('pacientes.edit', $paciente)
             ->with('success', 'Metas futuras canceladas com sucesso.');
+    }
+
+    private function ensurePacienteBelongsToUser(Request $request, Paciente $paciente): void
+    {
+        if ($paciente->user_id !== $request->user()->id) {
+            abort(404);
+        }
     }
 }

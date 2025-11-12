@@ -22,6 +22,12 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="mb-6 rounded-md bg-red-50 p-4 text-sm text-red-800">
+            {{ session('error') }}
+        </div>
+    @endif
+
     <div class="card p-6">
         <div class="overflow-x-auto rounded-lg border border-[#e3d7c3]">
             <table class="min-w-full table">
@@ -78,6 +84,24 @@
                                         Dashboard do paciente
                                     </a>
                                     <a href="{{ route('pacientes.edit', $paciente) }}" class="text-blue-600 hover:text-blue-900">Editar</a>
+                                    <form
+                                        action="{{ route('pacientes.enviar-acompanhamento', $paciente) }}"
+                                        method="POST"
+                                        class="inline-flex"
+                                        onsubmit="return confirm('Deseja enviar o relatório de acompanhamento para {{ $paciente->nome }}?');"
+                                    >
+                                        @csrf
+                                        @php
+                                            $canSend = (bool) ($paciente->whatsapp_numero || $paciente->telefone);
+                                        @endphp
+                                        <button
+                                            type="submit"
+                                            class="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-60"
+                                            @unless($canSend) disabled title="Cadastre um número de WhatsApp para enviar o acompanhamento." @endunless
+                                        >
+                                            Enviar acompanhamento
+                                        </button>
+                                    </form>
                                     <form action="{{ route('pacientes.destroy', $paciente) }}" method="POST" class="inline-block" onsubmit="return confirm('Tem certeza que deseja remover este paciente?');">
                                         @csrf
                                         @method('DELETE')

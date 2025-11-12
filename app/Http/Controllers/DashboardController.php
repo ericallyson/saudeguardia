@@ -7,6 +7,7 @@ use App\Models\MetaResposta;
 use App\Models\Paciente;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -17,15 +18,21 @@ class DashboardController extends Controller
         Carbon::setLocale(config('app.locale', 'pt_BR'));
 
         $activeStatuses = ['ativo', 'em_atendimento'];
+        $userId = (int) Auth::id();
 
-        $activePatients = Paciente::whereIn('status', $activeStatuses)->count();
-        $activePatientsPrevious = Paciente::whereIn('status', $activeStatuses)
+        $activePatients = Paciente::where('user_id', $userId)
+            ->whereIn('status', $activeStatuses)
+            ->count();
+        $activePatientsPrevious = Paciente::where('user_id', $userId)
+            ->whereIn('status', $activeStatuses)
             ->where('created_at', '<=', $now->copy()->subDays(7))
             ->count();
         $activeTrend = $this->makeTrend($activePatientsPrevious, $activePatients);
 
-        $totalMessages = MetaMessage::count();
-        $respondedMessages = MetaMessage::where('status', 'respondido')->count();
+        $totalMessages = MetaMessage::whereHas('paciente', fn ($query) => $query->where('user_id', $userId))->count();
+        $respondedMessages = MetaMessage::where('status', 'respondido')
+            ->whereHas('paciente', fn ($query) => $query->where('user_id', $userId))
+            ->count();
         $averageEngagement = $totalMessages > 0
             ? round(($respondedMessages / $totalMessages) * 100, 1)
             : 0.0;
@@ -34,17 +41,23 @@ class DashboardController extends Controller
         $previousWeekEnd = $lastWeekStart->copy()->subSecond();
         $previousWeekStart = $lastWeekStart->copy()->subDays(7)->startOfDay();
 
-        $lastWeekTotalMessages = MetaMessage::whereBetween('data_envio', [$lastWeekStart, $now])->count();
+        $lastWeekTotalMessages = MetaMessage::whereBetween('data_envio', [$lastWeekStart, $now])
+            ->whereHas('paciente', fn ($query) => $query->where('user_id', $userId))
+            ->count();
         $lastWeekRespondedMessages = MetaMessage::where('status', 'respondido')
             ->whereBetween('respondido_em', [$lastWeekStart, $now])
+            ->whereHas('paciente', fn ($query) => $query->where('user_id', $userId))
             ->count();
         $lastWeekEngagement = $lastWeekTotalMessages > 0
             ? ($lastWeekRespondedMessages / $lastWeekTotalMessages) * 100
             : 0.0;
 
-        $previousWeekTotalMessages = MetaMessage::whereBetween('data_envio', [$previousWeekStart, $previousWeekEnd])->count();
+        $previousWeekTotalMessages = MetaMessage::whereBetween('data_envio', [$previousWeekStart, $previousWeekEnd])
+            ->whereHas('paciente', fn ($query) => $query->where('user_id', $userId))
+            ->count();
         $previousWeekRespondedMessages = MetaMessage::where('status', 'respondido')
             ->whereBetween('respondido_em', [$previousWeekStart, $previousWeekEnd])
+            ->whereHas('paciente', fn ($query) => $query->where('user_id', $userId))
             ->count();
         $previousWeekEngagement = $previousWeekTotalMessages > 0
             ? ($previousWeekRespondedMessages / $previousWeekTotalMessages) * 100
@@ -55,18 +68,20 @@ class DashboardController extends Controller
         $alertsWeekStart = $lastWeekStart;
         $alertsWeekCount = MetaMessage::where('status', '!=', 'respondido')
             ->whereBetween('data_envio', [$alertsWeekStart, $now])
+            ->whereHas('paciente', fn ($query) => $query->where('user_id', $userId))
             ->count();
 
         $alertsPreviousWeekCount = MetaMessage::where('status', '!=', 'respondido')
             ->whereBetween('data_envio', [$previousWeekStart, $previousWeekEnd])
+            ->whereHas('paciente', fn ($query) => $query->where('user_id', $userId))
             ->count();
 
         $alertsTrend = $this->makeTrend($alertsPreviousWeekCount, $alertsWeekCount, increaseIsPositive: false);
 
-        $alertsData = $this->buildAlertPatients($now);
-        $evolucaoData = $this->buildEvolucaoData($now);
-        $statusDistribution = $this->buildStatusDistribution();
-        $recentAlerts = $this->buildRecentAlerts($now);
+        $alertsData = $this->buildAlertPatients($now, $userId);
+        $evolucaoData = $this->buildEvolucaoData($now, $userId);
+        $statusDistribution = $this->buildStatusDistribution($userId);
+        $recentAlerts = $this->buildRecentAlerts($now, $userId);
 
         return view('dashboard.index', [
             'stats' => [
@@ -146,11 +161,12 @@ class DashboardController extends Controller
     /**
      * @return array{summary: array{critico: int, atencao: int}, patients: Collection<int, array>}
      */
-    private function buildAlertPatients(Carbon $now): array
+    private function buildAlertPatients(Carbon $now, ?int $userId): array
     {
         $pendingMessages = MetaMessage::with(['paciente', 'meta'])
             ->where('status', '!=', 'respondido')
             ->where('data_envio', '<=', $now)
+            ->whereHas('paciente', fn ($query) => $query->where('user_id', $userId))
             ->get();
 
         $summary = [
@@ -228,7 +244,7 @@ class DashboardController extends Controller
     /**
      * @return array{labels: array<int, string>, values: array<int, int>}
      */
-    private function buildEvolucaoData(Carbon $now): array
+    private function buildEvolucaoData(Carbon $now, ?int $userId): array
     {
         $months = collect(range(0, 5))->map(function (int $index) use ($now) {
             return $now->copy()->subMonths(5 - $index)->startOfMonth();
@@ -237,6 +253,7 @@ class DashboardController extends Controller
         $startDate = $months->first()->copy();
 
         $responses = MetaResposta::where('respondido_em', '>=', $startDate)
+            ->whereHas('paciente', fn ($query) => $query->where('user_id', $userId))
             ->get()
             ->groupBy(fn (MetaResposta $resposta) => $resposta->respondido_em->format('Y-m'))
             ->map(fn (Collection $group) => $group->pluck('paciente_id')->unique()->count());
@@ -258,7 +275,7 @@ class DashboardController extends Controller
     /**
      * @return array{labels: array<int, string>, values: array<int, int>, colors: array<int, string>}
      */
-    private function buildStatusDistribution(): array
+    private function buildStatusDistribution(?int $userId): array
     {
         $statusLabels = [
             'ativo' => 'Ativo',
@@ -266,7 +283,8 @@ class DashboardController extends Controller
             'inativo' => 'Inativo',
         ];
 
-        $counts = Paciente::select('status')
+        $counts = Paciente::where('user_id', $userId)
+            ->select('status')
             ->selectRaw('COUNT(*) as total')
             ->groupBy('status')
             ->pluck('total', 'status');
@@ -289,11 +307,12 @@ class DashboardController extends Controller
     /**
      * @return Collection<int, array{text: string, level: string}>
      */
-    private function buildRecentAlerts(Carbon $now): Collection
+    private function buildRecentAlerts(Carbon $now, ?int $userId): Collection
     {
         return MetaMessage::with(['meta'])
             ->where('status', '!=', 'respondido')
             ->where('data_envio', '<=', $now)
+            ->whereHas('paciente', fn ($query) => $query->where('user_id', $userId))
             ->orderByDesc('data_envio')
             ->get()
             ->map(function (MetaMessage $message) use ($now) {
