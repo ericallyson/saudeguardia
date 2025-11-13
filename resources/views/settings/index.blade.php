@@ -78,6 +78,16 @@
                                 Desconectar WhatsApp
                             </button>
                         </form>
+
+                        <form method="POST" action="{{ route('settings.instance.delete') }}"
+                            class="inline-flex"
+                            onsubmit="return confirm('Tem certeza que deseja excluir esta instância? Essa ação não pode ser desfeita.');">
+                            @csrf
+                            <button type="submit"
+                                class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg shadow-sm transition-colors">
+                                Excluir instância
+                            </button>
+                        </form>
                     </div>
                 </div>
 

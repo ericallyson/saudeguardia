@@ -140,6 +140,35 @@ class SettingsController extends Controller
             ->with('status', 'Solicitação de desconexão enviada. Aguarde a atualização do status.');
     }
 
+    public function deleteInstance(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->whatsapp_instance_uuid) {
+            return redirect()
+                ->route('settings.index')
+                ->with('error', 'Nenhuma instância configurada para este usuário.');
+        }
+
+        $deleted = $this->deleteRemoteInstance($user->whatsapp_instance_uuid, $user->id);
+
+        if (! $deleted) {
+            return redirect()
+                ->route('settings.index')
+                ->with('error', 'Não foi possível excluir a instância. Tente novamente mais tarde.');
+        }
+
+        $user->forceFill([
+            'whatsapp_instance_uuid' => null,
+            'whatsapp_instance_status' => null,
+            'whatsapp_qr_code_base64' => null,
+        ])->save();
+
+        return redirect()
+            ->route('settings.index')
+            ->with('status', 'Instância excluída com sucesso. Você pode criar uma nova sempre que precisar.');
+    }
+
     public function instanceStatus(Request $request)
     {
         $user = $request->user();
