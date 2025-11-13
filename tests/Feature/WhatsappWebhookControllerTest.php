@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class WhatsappWebhookControllerTest extends TestCase
@@ -59,5 +60,35 @@ class WhatsappWebhookControllerTest extends TestCase
 
         $this->assertSame('connected', $user->whatsapp_instance_status);
         $this->assertNull($user->whatsapp_qr_code_base64);
+    }
+
+    public function test_payload_is_logged_to_whatsapp_webhook_log_file(): void
+    {
+        $logPath = storage_path('logs/whatsapp-webhooks.log');
+
+        if (file_exists($logPath)) {
+            unlink($logPath);
+        }
+
+        $payload = [
+            'instance_uuid' => 'instance-789',
+            'data' => [
+                'status' => 'connected',
+            ],
+            'extra' => 'value',
+        ];
+
+        $this->postJson(route('webhooks.whatsapp'), $payload)
+            ->assertOk()
+            ->assertJson(['received' => true]);
+
+        $this->assertFileExists($logPath);
+
+        $contents = file_get_contents($logPath);
+
+        $this->assertIsString($contents);
+        $this->assertTrue(Str::contains($contents, 'Webhook do WhatsApp recebido'));
+        $this->assertTrue(Str::contains($contents, 'instance-789'));
+        $this->assertTrue(Str::contains($contents, '"extra":"value"'));
     }
 }

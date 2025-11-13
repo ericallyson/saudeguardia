@@ -105,6 +105,13 @@ return [
             'processors' => [PsrLogMessageProcessor::class],
         ],
 
+        'whatsapp-webhooks' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/whatsapp-webhooks.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
         'syslog' => [
             'driver' => 'syslog',
             'level' => env('LOG_LEVEL', 'debug'),
