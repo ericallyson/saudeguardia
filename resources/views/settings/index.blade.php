@@ -65,7 +65,7 @@
                             <button type="submit"
                                 class="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-lg shadow-sm transition-colors"
                                 id="connect-button">
-                                Conectar instância
+                                Conectar WhatsApp
                             </button>
                         </form>
 
@@ -75,7 +75,7 @@
                             <button type="submit"
                                 class="px-5 py-2 bg-rose-500 hover:bg-rose-600 text-white font-medium rounded-lg shadow-sm transition-colors"
                                 id="disconnect-button">
-                                Desconectar instância
+                                Desconectar WhatsApp
                             </button>
                         </form>
                     </div>
@@ -116,12 +116,14 @@
                     authenticated: 'bg-emerald-500',
                     open: 'bg-emerald-500',
                     qr_code: 'bg-yellow-400',
+                    qrcode: 'bg-yellow-400',
                     connecting: 'bg-yellow-400',
                     loading: 'bg-yellow-400',
                     reconnecting: 'bg-yellow-400',
                     disconnecting: 'bg-yellow-400',
                     disconnected: 'bg-rose-500',
-                    close: 'bg-rose-500'
+                    close: 'bg-rose-500',
+                    refused: 'bg-rose-500'
                 };
 
                 const connectedStatuses = @json($connectedStatuses);
@@ -196,7 +198,7 @@
 
                     const qrCode = meta && typeof meta === 'object' ? meta.qr_code_base64 ?? null : null;
 
-                    if (status === 'qr_code') {
+                    if (['qr_code', 'qrcode'].includes(status)) {
                         updateQrCode(qrCode);
                     } else {
                         updateQrCode(null);
