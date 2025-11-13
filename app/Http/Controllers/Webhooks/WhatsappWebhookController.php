@@ -12,7 +12,9 @@ class WhatsappWebhookController extends Controller
 {
     public function __invoke(Request $request)
     {
-        Log::info('Webhook do WhatsApp recebido', [
+        $logger = Log::channel('whatsapp-webhooks');
+
+        $logger->info('Webhook do WhatsApp recebido', [
             'headers' => $request->headers->all(),
             'payload' => $request->all(),
         ]);
@@ -22,12 +24,12 @@ class WhatsappWebhookController extends Controller
         $user = null;
 
         if (! $instanceUuid) {
-            Log::warning('Webhook recebido sem UUID da instância.');
+            $logger->warning('Webhook recebido sem UUID da instância.');
         } else {
             $user = User::where('whatsapp_instance_uuid', $instanceUuid)->first();
 
             if (! $user) {
-                Log::warning('Webhook recebido para instância desconhecida.', [
+                $logger->warning('Webhook recebido para instância desconhecida.', [
                     'instance_uuid' => $instanceUuid,
                 ]);
             }
@@ -38,7 +40,7 @@ class WhatsappWebhookController extends Controller
         if (is_string($status) && $status !== '') {
             $updates['whatsapp_instance_status'] = $status;
         } elseif ($instanceUuid) {
-            Log::warning('Webhook recebido sem status válido.', [
+            $logger->warning('Webhook recebido sem status válido.', [
                 'instance_uuid' => $instanceUuid,
             ]);
         }
@@ -56,7 +58,7 @@ class WhatsappWebhookController extends Controller
         if ($user && $updates !== []) {
             $user->forceFill($updates)->save();
 
-            Log::info('Dados da instância do WhatsApp atualizados via webhook.', [
+            $logger->info('Dados da instância do WhatsApp atualizados via webhook.', [
                 'user_id' => $user->id,
                 'instance_uuid' => $instanceUuid,
                 'status' => $status,
