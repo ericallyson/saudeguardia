@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\MetaMessage;
-use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -43,18 +42,11 @@ class SendPendingMetaMessages extends Command
     {
         $now = Carbon::now();
 
-        $instanceUuid = $this->resolveWhatsappInstanceUuid();
-
-        if ($instanceUuid === null) {
-            Log::warning('Nenhuma instância de WhatsApp configurada para envio.');
-
-            return 0;
-        }
-
         $messages = MetaMessage::query()
             ->where('status', 'pendente')
             ->where('data_envio', '<=', $now)
             ->orderBy('data_envio')
+            ->with(['paciente.user'])
             ->get()
             ->values();
 
@@ -67,6 +59,19 @@ class SendPendingMetaMessages extends Command
         $processed = 0;
 
         foreach ($messages as $index => $message) {
+            $user = $message->paciente?->user;
+            $instanceUuid = $user?->whatsapp_instance_uuid;
+
+            if ($instanceUuid === null) {
+                Log::warning('Paciente sem instância de WhatsApp configurada para envio.', [
+                    'meta_message_id' => $message->id,
+                    'paciente_id' => $message->paciente?->id,
+                    'user_id' => $user?->id,
+                ]);
+
+                continue;
+            }
+
             if ($this->sendMessage($message, $instanceUuid)) {
                 $processed++;
             }
@@ -151,11 +156,4 @@ class SendPendingMetaMessages extends Command
         );
     }
 
-    private function resolveWhatsappInstanceUuid(): ?string
-    {
-        return User::query()
-            ->whereNotNull('whatsapp_instance_uuid')
-            ->orderByDesc('updated_at')
-            ->value('whatsapp_instance_uuid');
-    }
 }
