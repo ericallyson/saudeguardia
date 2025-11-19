@@ -9,6 +9,34 @@ use Illuminate\Support\Collection;
 
 class PacienteDashboardService
 {
+    private const BLOOD_PRESSURE_LEVELS = [
+        'normal' => [
+            'label' => 'Pressão normal',
+            'description' => 'PAS < 120 e PAD < 80',
+            'color' => '#22c55e',
+        ],
+        'pre' => [
+            'label' => 'Pré-hipertenso',
+            'description' => 'PAS entre 120-139 e/ou PAD entre 80-89',
+            'color' => '#fb923c',
+        ],
+        'stage_1' => [
+            'label' => 'Hipertensão Estágio 1',
+            'description' => 'PAS 140-159 e/ou PAD 90-99',
+            'color' => '#f87171',
+        ],
+        'stage_2' => [
+            'label' => 'Hipertensão Estágio 2',
+            'description' => 'PAS 160-179 e/ou PAD 100-109',
+            'color' => '#ef4444',
+        ],
+        'stage_3' => [
+            'label' => 'Hipertensão Estágio 3',
+            'description' => 'PAS ≥ 180 e/ou PAD ≥ 110',
+            'color' => '#b91c1c',
+        ],
+    ];
+
     public function calcularEngajamento(Paciente $paciente): array
     {
         $agora = Carbon::now();
@@ -141,6 +169,19 @@ class PacienteDashboardService
             ->filter(fn ($resposta) => $resposta->respondido_em !== null)
             ->sortBy('respondido_em');
 
+        if ($meta->tipo === 'blood_pressure') {
+            $bloodPressureChart = $this->buildBloodPressureChart($respostas);
+
+            return [
+                'meta_id' => $meta->id,
+                'nome' => $meta->nome,
+                'tipo' => $meta->tipo,
+                'has_data' => $bloodPressureChart['has_data'],
+                'legend' => $bloodPressureChart['legend'],
+                'chart' => $bloodPressureChart['chart'],
+            ];
+        }
+
         $mensagens = $meta->messages->sortBy('data_envio');
 
         $inicio = collect([
@@ -192,6 +233,7 @@ class PacienteDashboardService
             'nome' => $meta->nome,
             'tipo' => $meta->tipo,
             'has_data' => $possuiDados,
+            'legend' => null,
             'chart' => array_filter([
                 'type' => $ehNumerica ? 'line' : 'bar',
                 'labels' => $labels,
@@ -201,5 +243,79 @@ class PacienteDashboardService
                 'datasetLabel' => $ehNumerica ? 'Valor informado' : 'Preenchimento diário',
             ]),
         ];
+    }
+
+    private function buildBloodPressureChart(Collection $respostas): array
+    {
+        $points = $respostas
+            ->map(function ($resposta) {
+                $valores = $this->parseBloodPressureValue($resposta->valor);
+
+                if (! $valores) {
+                    return null;
+                }
+
+                $classificacao = $this->classifyBloodPressure($valores['pas'], $valores['pad']);
+
+                return [
+                    'x' => $valores['pas'],
+                    'y' => $valores['pad'],
+                    'color' => $classificacao['color'],
+                    'category' => $classificacao['label'],
+                    'label' => $resposta->respondido_em?->format('d/m'),
+                    'fullLabel' => $resposta->respondido_em?->format('d/m/Y \à\s H:i'),
+                    'valueLabel' => sprintf('%d x %d', $valores['pas'], $valores['pad']),
+                ];
+            })
+            ->filter()
+            ->values();
+
+        return [
+            'has_data' => $points->isNotEmpty(),
+            'legend' => array_values(self::BLOOD_PRESSURE_LEVELS),
+            'chart' => [
+                'type' => 'blood_pressure',
+                'points' => $points,
+                'axis' => ['min' => 50, 'max' => 220],
+                'datasetLabel' => 'Medições (PAS x PAD)',
+            ],
+        ];
+    }
+
+    private function parseBloodPressureValue(?string $valor): ?array
+    {
+        if (! is_string($valor)) {
+            return null;
+        }
+
+        if (! preg_match('/^(\d{2,3})\s*[xX]\s*(\d{2,3})$/', trim($valor), $matches)) {
+            return null;
+        }
+
+        return [
+            'pas' => (int) $matches[1],
+            'pad' => (int) $matches[2],
+        ];
+    }
+
+    private function classifyBloodPressure(int $pas, int $pad): array
+    {
+        if ($pas >= 180 || $pad >= 110) {
+            return self::BLOOD_PRESSURE_LEVELS['stage_3'];
+        }
+
+        if ($pas >= 160 || $pad >= 100) {
+            return self::BLOOD_PRESSURE_LEVELS['stage_2'];
+        }
+
+        if ($pas >= 140 || $pad >= 90) {
+            return self::BLOOD_PRESSURE_LEVELS['stage_1'];
+        }
+
+        if ($pas >= 120 || $pad >= 80) {
+            return self::BLOOD_PRESSURE_LEVELS['pre'];
+        }
+
+        return self::BLOOD_PRESSURE_LEVELS['normal'];
     }
 }

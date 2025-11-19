@@ -20,9 +20,10 @@ class Meta extends Model
 
     public const TIPOS = [
         'boolean' => 'Sim/Não',
-        'integer' => 'Número inteiro',
+        'integer' => 'Número',
         'scale' => 'Escala de 1 a 5',
         'texto' => 'Texto',
+        'blood_pressure' => 'Pressão arterial',
     ];
 
     public const PERIODICIDADES = [

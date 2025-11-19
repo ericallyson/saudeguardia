@@ -38,6 +38,21 @@
                     <div class="mt-4 h-64">
                         <canvas id="meta-response-chart-{{ $metaChartAtual['meta_id'] }}"></canvas>
                     </div>
+                    @if (! empty($metaChartAtual['legend']))
+                        <div class="mt-4 space-y-3">
+                            @foreach ($metaChartAtual['legend'] as $legend)
+                                <div class="flex gap-3 text-sm text-slate-600">
+                                    <span class="mt-1 h-3 w-3 rounded-full" style="background-color: {{ $legend['color'] }}"></span>
+                                    <div>
+                                        <p class="font-medium text-slate-700">{{ $legend['label'] }}</p>
+                                        @if (! empty($legend['description']))
+                                            <p class="text-slate-500">{{ $legend['description'] }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                     @if (! $metaChartAtual['has_data'])
                         <p class="mt-4 text-sm text-slate-500">Você ainda não registrou respostas anteriores para esta meta.</p>
                     @endif
@@ -47,11 +62,20 @@
             <form method="POST" action="{{ route('metas.responder.store', $metaMessage->token) }}" class="space-y-6">
                 @csrf
                 <div class="space-y-2">
-                    <label for="valor" class="block text-sm font-medium text-slate-700">
+                    <label @if ($meta->tipo !== 'blood_pressure') for="valor" @endif class="block text-sm font-medium text-slate-700">
                         {{ filled($meta->descricao) ? $meta->descricao : 'Como você está indo com esta meta?' }}
                     </label>
-                    @include('metas.responder_campos', ['meta' => $meta, 'valorAnterior' => old('valor')])
+                    @include('metas.responder_campos', [
+                        'meta' => $meta,
+                        'valorAnterior' => old('valor'),
+                    ])
                     @error('valor')
+                        <p class="text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    @error('valor_pas')
+                        <p class="text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    @error('valor_pad')
                         <p class="text-sm text-red-600">{{ $message }}</p>
                     @enderror
                 </div>
