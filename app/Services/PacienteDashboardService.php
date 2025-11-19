@@ -258,8 +258,8 @@ class PacienteDashboardService
                 $classificacao = $this->classifyBloodPressure($valores['pas'], $valores['pad']);
 
                 return [
-                    'x' => $valores['pas'],
-                    'y' => $valores['pad'],
+                    'pas' => $valores['pas'],
+                    'pad' => $valores['pad'],
                     'color' => $classificacao['color'],
                     'category' => $classificacao['label'],
                     'label' => $resposta->respondido_em?->format('d/m'),
@@ -276,11 +276,38 @@ class PacienteDashboardService
             'chart' => [
                 'type' => 'blood_pressure',
                 'points' => $points,
-                'axis' => ['min' => 50, 'max' => 220],
-                'scaleZones' => $this->bloodPressureScaleZones(),
+                'axis' => [
+                    'pas' => ['min' => 50, 'max' => 220],
+                    'pad' => ['min' => 50, 'max' => 120],
+                ],
+                'scaleZones' => $this->bloodPressureScaleZonesForChart(),
                 'datasetLabel' => 'Medições (PAS x PAD)',
             ],
         ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function bloodPressureScaleZonesForChart(): array
+    {
+        return array_map(function ($zone) {
+            $chartZone = [
+                'label' => $zone['label'],
+                'backgroundColor' => $zone['backgroundColor'],
+                'borderColor' => $zone['borderColor'],
+            ];
+
+            if (isset($zone['pad'])) {
+                $chartZone['x'] = $zone['pad'];
+            }
+
+            if (isset($zone['pas'])) {
+                $chartZone['y'] = $zone['pas'];
+            }
+
+            return $chartZone;
+        }, $this->bloodPressureScaleZones());
     }
 
     private function parseBloodPressureValue(?string $valor): ?array
@@ -335,56 +362,56 @@ class PacienteDashboardService
         return [
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['normal']['label'],
-                'x' => ['min' => 50, 'max' => 120],
-                'y' => ['min' => 50, 'max' => 80],
+                'pas' => ['min' => 50, 'max' => 120],
+                'pad' => ['min' => 50, 'max' => 80],
                 'backgroundColor' => 'rgba(34, 197, 94, 0.12)',
                 'borderColor' => 'rgba(34, 197, 94, 0.45)',
             ],
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['pre']['label'],
-                'x' => ['min' => 120, 'max' => 140],
+                'pas' => ['min' => 120, 'max' => 140],
                 'backgroundColor' => 'rgba(251, 146, 60, 0.12)',
                 'borderColor' => 'rgba(251, 146, 60, 0.35)',
             ],
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['pre']['label'],
-                'y' => ['min' => 80, 'max' => 90],
+                'pad' => ['min' => 80, 'max' => 90],
                 'backgroundColor' => 'rgba(251, 146, 60, 0.12)',
                 'borderColor' => 'rgba(251, 146, 60, 0.35)',
             ],
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['stage_1']['label'],
-                'x' => ['min' => 140, 'max' => 160],
+                'pas' => ['min' => 140, 'max' => 160],
                 'backgroundColor' => 'rgba(248, 113, 113, 0.12)',
                 'borderColor' => 'rgba(248, 113, 113, 0.45)',
             ],
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['stage_1']['label'],
-                'y' => ['min' => 90, 'max' => 100],
+                'pad' => ['min' => 90, 'max' => 100],
                 'backgroundColor' => 'rgba(248, 113, 113, 0.12)',
                 'borderColor' => 'rgba(248, 113, 113, 0.45)',
             ],
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['stage_2']['label'],
-                'x' => ['min' => 160, 'max' => 180],
+                'pas' => ['min' => 160, 'max' => 180],
                 'backgroundColor' => 'rgba(239, 68, 68, 0.12)',
                 'borderColor' => 'rgba(239, 68, 68, 0.45)',
             ],
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['stage_2']['label'],
-                'y' => ['min' => 100, 'max' => 110],
+                'pad' => ['min' => 100, 'max' => 110],
                 'backgroundColor' => 'rgba(239, 68, 68, 0.12)',
                 'borderColor' => 'rgba(239, 68, 68, 0.45)',
             ],
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['stage_3']['label'],
-                'x' => ['min' => 180, 'max' => 220],
+                'pas' => ['min' => 180, 'max' => 220],
                 'backgroundColor' => 'rgba(185, 28, 28, 0.15)',
                 'borderColor' => 'rgba(185, 28, 28, 0.6)',
             ],
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['stage_3']['label'],
-                'y' => ['min' => 110, 'max' => 220],
+                'pad' => ['min' => 110, 'max' => 140],
                 'backgroundColor' => 'rgba(185, 28, 28, 0.15)',
                 'borderColor' => 'rgba(185, 28, 28, 0.6)',
             ],
