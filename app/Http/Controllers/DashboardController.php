@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MetaMessage;
 use App\Models\MetaResposta;
 use App\Models\Paciente;
+use App\Services\PacienteDashboardService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +13,10 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
+    public function __construct(private PacienteDashboardService $pacienteDashboardService)
+    {
+    }
+
     public function index(): View
     {
         $now = Carbon::now();
@@ -154,32 +159,31 @@ class DashboardController extends Controller
         $patients = Paciente::where('user_id', $userId)
             ->whereIn('status', $activeStatuses)
             ->whereHas('metaMessages')
-            ->withCount([
-                'metaMessages as metas_previstas' => function ($query) use ($start, $end) {
-                    $query->where('data_envio', '<=', $end);
-
-                    if ($start) {
-                        $query->where('data_envio', '>=', $start);
-                    }
-                },
-                'metaRespostas as metas_respondidas' => function ($query) use ($start, $end) {
-                    $query->where('respondido_em', '<=', $end);
-
-                    if ($start) {
-                        $query->where('respondido_em', '>=', $start);
-                    }
-                },
-            ])
             ->get();
 
         $engagements = $patients
-            ->map(function (Paciente $paciente) {
-                $previstas = (int) $paciente->metas_previstas;
-                $respondidas = (int) $paciente->metas_respondidas;
+            ->map(function (Paciente $paciente) use ($end, $start) {
+                if ($start === null) {
+                    $engajamento = $this->pacienteDashboardService->calcularEngajamento($paciente);
+
+                    return $engajamento['previstas_ate_hoje'] > 0
+                        ? $engajamento['percentual_previsto']
+                        : null;
+                }
+
+                $previstas = $paciente->metaMessages()
+                    ->where('data_envio', '<=', $end)
+                    ->when($start, fn ($query) => $query->where('data_envio', '>=', $start))
+                    ->count();
 
                 if ($previstas <= 0) {
                     return null;
                 }
+
+                $respondidas = $paciente->metaRespostas()
+                    ->where('respondido_em', '<=', $end)
+                    ->where('respondido_em', '>=', $start)
+                    ->count();
 
                 return ($respondidas / $previstas) * 100;
             })
