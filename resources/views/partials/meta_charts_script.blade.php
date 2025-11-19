@@ -8,6 +8,71 @@
 
             const chartPrefix = @json($chartPrefix ?? 'meta-chart');
 
+            const renderBloodPressureChart = (ctx, chartData) => {
+                const points = Array.isArray(chartData.points) ? chartData.points : [];
+                const axis = chartData.axis || {};
+                const colors = points.map((point) => point.color || '#4f46e5');
+
+                const dataset = {
+                    label: chartData.datasetLabel || 'Medições (PAS x PAD)',
+                    data: points.map((point) => ({ x: Number(point.x), y: Number(point.y) })),
+                    showLine: false,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                    spanGaps: false,
+                    pointBackgroundColor: colors.length > 0 ? colors : '#4f46e5',
+                    pointBorderColor: colors.length > 0 ? colors : '#4f46e5',
+                };
+
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => {
+                                    const index = items && items.length > 0 ? items[0].dataIndex : 0;
+                                    return points[index]?.fullLabel || '';
+                                },
+                                label: (context) => {
+                                    const index = context.dataIndex ?? 0;
+                                    const point = points[index] || {};
+                                    const value = point.valueLabel || '';
+                                    const category = point.category ? ` (${point.category})` : '';
+                                    return `${value}${category}`.trim();
+                                },
+                            },
+                        },
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'PAS (mmHg)' },
+                            min: axis.min ?? 50,
+                            max: axis.max ?? 220,
+                            ticks: { stepSize: 10 },
+                            grid: { drawBorder: false },
+                        },
+                        y: {
+                            title: { display: true, text: 'PAD (mmHg)' },
+                            min: axis.min ?? 50,
+                            max: axis.max ?? 220,
+                            ticks: { stepSize: 10 },
+                            grid: { drawBorder: false },
+                        },
+                    },
+                };
+
+                return new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        labels: points.map((point) => point.label || ''),
+                        datasets: [dataset],
+                    },
+                    options,
+                });
+            };
+
             metaChartsData.forEach((meta) => {
                 if (!meta || !meta.meta_id || !meta.chart) {
                     return;
@@ -22,7 +87,15 @@
 
                 const ctx = canvas.getContext('2d');
                 const chartData = meta.chart;
-                const isBarChart = chartData.type === 'bar';
+                const chartType = chartData.type || 'bar';
+
+                if (chartType === 'blood_pressure') {
+                    renderBloodPressureChart(ctx, chartData);
+                    canvas.dataset.chartInitialized = 'true';
+                    return;
+                }
+
+                const isBarChart = chartType === 'bar';
                 const dataset = {
                     label: chartData.datasetLabel || '',
                     data: chartData.values || [],
@@ -105,7 +178,7 @@
 
                 canvas.dataset.chartInitialized = 'true';
                 new Chart(ctx, {
-                    type: chartData.type || 'bar',
+                    type: chartType,
                     data: {
                         labels: chartData.labels || [],
                         datasets: [dataset],

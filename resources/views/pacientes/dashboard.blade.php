@@ -130,6 +130,22 @@
                             <canvas id="meta-chart-{{ $metaChart['meta_id'] }}"></canvas>
                         </div>
 
+                        @if (! empty($metaChart['legend']))
+                            <div class="mt-4 space-y-3">
+                                @foreach ($metaChart['legend'] as $legend)
+                                    <div class="flex gap-3 text-sm text-slate-600">
+                                        <span class="mt-1 h-3 w-3 rounded-full" style="background-color: {{ $legend['color'] }}"></span>
+                                        <div>
+                                            <p class="font-medium text-slate-700">{{ $legend['label'] }}</p>
+                                            @if (! empty($legend['description']))
+                                                <p class="text-slate-500">{{ $legend['description'] }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
                         @if (! $metaChart['has_data'])
                             <p class="mt-4 text-sm text-gray-500">Ainda não há respostas registradas para esta meta.</p>
                         @endif

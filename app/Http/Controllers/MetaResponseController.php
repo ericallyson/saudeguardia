@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class MetaResponseController extends Controller
@@ -93,9 +94,12 @@ class MetaResponseController extends Controller
             'boolean' => $request->validate([
                 'valor' => ['required', 'in:sim,nao'],
             ])['valor'],
-            'integer' => (string) $request->validate([
-                'valor' => ['required', 'integer'],
-            ])['valor'],
+            'integer' => $this->sanitizeDecimal($request->validate([
+                'valor' => ['required', 'regex:/^-?\d+(?:[\.,]\d+)?$/'],
+            ])['valor']),
+            'blood_pressure' => $this->formatBloodPressure(
+                $request->validate($this->bloodPressureRules())
+            ),
             'scale' => (string) $request->validate([
                 'valor' => ['required', 'integer', 'min:1', 'max:5'],
             ])['valor'],
@@ -105,4 +109,29 @@ class MetaResponseController extends Controller
         };
     }
 
+    private function sanitizeDecimal(string $valor): string
+    {
+        return str_replace(',', '.', trim($valor));
+    }
+
+    /**
+     * @return array<string, array<int, string|\Illuminate\Contracts\Validation\Rule>>
+     */
+    private function bloodPressureRules(): array
+    {
+        $opcoes = range(50, 220, 5);
+
+        return [
+            'valor_pas' => ['required', 'integer', Rule::in($opcoes)],
+            'valor_pad' => ['required', 'integer', Rule::in($opcoes)],
+        ];
+    }
+
+    /**
+     * @param  array{valor_pas: int, valor_pad: int}  $valores
+     */
+    private function formatBloodPressure(array $valores): string
+    {
+        return sprintf('%dx%d', $valores['valor_pas'], $valores['valor_pad']);
+    }
 }
