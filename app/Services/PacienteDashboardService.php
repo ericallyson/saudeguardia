@@ -320,7 +320,7 @@ class PacienteDashboardService
             return self::BLOOD_PRESSURE_LEVELS['stage_1'];
         }
 
-        if ($pas >= 120 || $pad >= 80) {
+        if ($pas > 120 || $pad > 80) {
             return self::BLOOD_PRESSURE_LEVELS['pre'];
         }
 
