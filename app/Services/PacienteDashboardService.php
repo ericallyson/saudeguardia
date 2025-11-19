@@ -293,9 +293,16 @@ class PacienteDashboardService
             return null;
         }
 
+        $pas = (int) $matches[1];
+        $pad = (int) $matches[2];
+
+        if ($pas < $pad) {
+            [$pas, $pad] = [$pad, $pas];
+        }
+
         return [
-            'pas' => (int) $matches[1],
-            'pad' => (int) $matches[2],
+            'pas' => $pas,
+            'pad' => $pad,
         ];
     }
 
