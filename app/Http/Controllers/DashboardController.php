@@ -156,44 +156,29 @@ class DashboardController extends Controller
 
     private function calculateAverageEngagement(int $userId, array $activeStatuses, ?Carbon $start, Carbon $end): float
     {
-        $patients = Paciente::where('user_id', $userId)
-            ->whereIn('status', $activeStatuses)
-            ->whereHas('metaMessages')
-            ->get();
+        $startDate = $start?->copy() ?? $end->copy()->subDays(30)->startOfDay();
 
-        $engagements = $patients
-            ->map(function (Paciente $paciente) use ($end, $start) {
-                if ($start === null) {
-                    $engajamento = $this->pacienteDashboardService->calcularEngajamento($paciente);
+        $recentMessagesQuery = MetaMessage::whereHas(
+            'paciente',
+            fn ($query) => $query
+                ->where('user_id', $userId)
+                ->whereIn('status', $activeStatuses),
+        )
+            ->whereBetween('created_at', [$startDate, $end]);
 
-                    return $engajamento['previstas_ate_hoje'] > 0
-                        ? $engajamento['percentual_previsto']
-                        : null;
-                }
+        $totalMetas = (clone $recentMessagesQuery)->count();
 
-                $previstas = $paciente->metaMessages()
-                    ->where('data_envio', '<=', $end)
-                    ->when($start, fn ($query) => $query->where('data_envio', '>=', $start))
-                    ->count();
-
-                if ($previstas <= 0) {
-                    return null;
-                }
-
-                $respondidas = $paciente->metaRespostas()
-                    ->where('respondido_em', '<=', $end)
-                    ->where('respondido_em', '>=', $start)
-                    ->count();
-
-                return ($respondidas / $previstas) * 100;
-            })
-            ->filter(fn (?float $value) => $value !== null);
-
-        if ($engagements->isEmpty()) {
+        if ($totalMetas === 0) {
             return 0.0;
         }
 
-        return round($engagements->avg(), 1);
+        $messageIds = $recentMessagesQuery->pluck('id');
+
+        $metasRespondidas = MetaResposta::whereIn('meta_message_id', $messageIds)
+            ->whereBetween('respondido_em', [$startDate, $end])
+            ->count();
+
+        return round(($metasRespondidas / $totalMetas) * 100, 1);
     }
 
     /**
