@@ -8,10 +8,67 @@
 
             const chartPrefix = @json($chartPrefix ?? 'meta-chart');
 
+            const bloodPressureScalePlugin = {
+                id: 'bloodPressureScale',
+                beforeDraw(chart, _args, opts) {
+                    const zones = Array.isArray(opts?.zones) ? opts.zones : [];
+                    if (zones.length === 0) {
+                        return;
+                    }
+
+                    const xScale = chart.scales?.x;
+                    const yScale = chart.scales?.y;
+
+                    if (!xScale || !yScale) {
+                        return;
+                    }
+
+                    const resolveRange = (scale, range) => {
+                        const min = typeof range?.min === 'number' ? range.min : scale.min ?? scale.options?.min;
+                        const max = typeof range?.max === 'number' ? range.max : scale.max ?? scale.options?.max;
+                        return [min, max];
+                    };
+
+                    zones.forEach((zone) => {
+                        const [xMin, xMax] = resolveRange(xScale, zone.x ?? null);
+                        const [yMin, yMax] = resolveRange(yScale, zone.y ?? null);
+
+                        if ([xMin, xMax, yMin, yMax].some((value) => typeof value !== 'number')) {
+                            return;
+                        }
+
+                        const left = xScale.getPixelForValue(xMin);
+                        const right = xScale.getPixelForValue(xMax);
+                        const bottom = yScale.getPixelForValue(yMin);
+                        const top = yScale.getPixelForValue(yMax);
+
+                        const width = Math.max(0, right - left);
+                        const height = Math.max(0, bottom - top);
+
+                        if (width === 0 || height === 0) {
+                            return;
+                        }
+
+                        chart.ctx.save();
+                        chart.ctx.fillStyle = zone.backgroundColor || 'rgba(148, 163, 184, 0.1)';
+                        chart.ctx.fillRect(left, top, width, height);
+
+                        if (zone.borderColor) {
+                            chart.ctx.strokeStyle = zone.borderColor;
+                            chart.ctx.lineWidth = typeof zone.borderWidth === 'number' ? zone.borderWidth : 1;
+                            chart.ctx.strokeRect(left, top, width, height);
+                        }
+
+                        chart.ctx.restore();
+                    });
+                },
+            };
+
             const renderBloodPressureChart = (ctx, chartData) => {
                 const points = Array.isArray(chartData.points) ? chartData.points : [];
                 const axis = chartData.axis || {};
                 const colors = points.map((point) => point.color || '#4f46e5');
+                const scaleZones = Array.isArray(chartData.scaleZones) ? chartData.scaleZones : [];
 
                 const dataset = {
                     label: chartData.datasetLabel || 'Medições (PAS x PAD)',
@@ -63,14 +120,24 @@
                     },
                 };
 
-                return new Chart(ctx, {
+                if (scaleZones.length > 0) {
+                    options.plugins.bloodPressureScale = { zones: scaleZones };
+                }
+
+                const chartConfig = {
                     type: 'scatter',
                     data: {
                         labels: points.map((point) => point.label || ''),
                         datasets: [dataset],
                     },
                     options,
-                });
+                };
+
+                if (scaleZones.length > 0) {
+                    chartConfig.plugins = [bloodPressureScalePlugin];
+                }
+
+                return new Chart(ctx, chartConfig);
             };
 
             metaChartsData.forEach((meta) => {
