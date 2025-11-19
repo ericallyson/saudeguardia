@@ -20,10 +20,6 @@ class DashboardController extends Controller
         $activeStatuses = ['ativo', 'em_atendimento'];
         $userId = (int) Auth::id();
 
-        $activePatientIds = Paciente::where('user_id', $userId)
-            ->whereIn('status', $activeStatuses)
-            ->pluck('id');
-
         $activePatients = Paciente::where('user_id', $userId)
             ->whereIn('status', $activeStatuses)
             ->count();
@@ -33,37 +29,30 @@ class DashboardController extends Controller
             ->count();
         $activeTrend = $this->makeTrend($activePatientsPrevious, $activePatients);
 
-        $totalMessages = MetaMessage::whereIn('paciente_id', $activePatientIds)
-            ->where('data_envio', '<=', $now)
-            ->count();
-        $respondedMessages = MetaResposta::whereIn('paciente_id', $activePatientIds)->count();
-        $averageEngagement = $totalMessages > 0
-            ? round(($respondedMessages / $totalMessages) * 100, 1)
-            : 0.0;
+        $averageEngagement = $this->calculateAverageEngagement(
+            $userId,
+            $activeStatuses,
+            null,
+            $now,
+        );
 
         $lastWeekStart = $now->copy()->subDays(6)->startOfDay();
         $previousWeekEnd = $lastWeekStart->copy()->subSecond();
         $previousWeekStart = $lastWeekStart->copy()->subDays(7)->startOfDay();
 
-        $lastWeekTotalMessages = MetaMessage::whereIn('paciente_id', $activePatientIds)
-            ->whereBetween('data_envio', [$lastWeekStart, $now])
-            ->count();
-        $lastWeekRespondedMessages = MetaResposta::whereIn('paciente_id', $activePatientIds)
-            ->whereBetween('respondido_em', [$lastWeekStart, $now])
-            ->count();
-        $lastWeekEngagement = $lastWeekTotalMessages > 0
-            ? ($lastWeekRespondedMessages / $lastWeekTotalMessages) * 100
-            : 0.0;
+        $lastWeekEngagement = $this->calculateAverageEngagement(
+            $userId,
+            $activeStatuses,
+            $lastWeekStart,
+            $now,
+        );
 
-        $previousWeekTotalMessages = MetaMessage::whereIn('paciente_id', $activePatientIds)
-            ->whereBetween('data_envio', [$previousWeekStart, $previousWeekEnd])
-            ->count();
-        $previousWeekRespondedMessages = MetaResposta::whereIn('paciente_id', $activePatientIds)
-            ->whereBetween('respondido_em', [$previousWeekStart, $previousWeekEnd])
-            ->count();
-        $previousWeekEngagement = $previousWeekTotalMessages > 0
-            ? ($previousWeekRespondedMessages / $previousWeekTotalMessages) * 100
-            : 0.0;
+        $previousWeekEngagement = $this->calculateAverageEngagement(
+            $userId,
+            $activeStatuses,
+            $previousWeekStart,
+            $previousWeekEnd,
+        );
 
         $engagementTrend = $this->makeTrend($previousWeekEngagement, $lastWeekEngagement);
 
@@ -158,6 +147,49 @@ class DashboardController extends Controller
             'symbol' => $symbol,
             'color' => $color,
         ];
+    }
+
+    private function calculateAverageEngagement(int $userId, array $activeStatuses, ?Carbon $start, Carbon $end): float
+    {
+        $patients = Paciente::where('user_id', $userId)
+            ->whereIn('status', $activeStatuses)
+            ->whereHas('metaMessages')
+            ->withCount([
+                'metaMessages as metas_previstas' => function ($query) use ($start, $end) {
+                    $query->where('data_envio', '<=', $end);
+
+                    if ($start) {
+                        $query->where('data_envio', '>=', $start);
+                    }
+                },
+                'metaRespostas as metas_respondidas' => function ($query) use ($start, $end) {
+                    $query->where('respondido_em', '<=', $end);
+
+                    if ($start) {
+                        $query->where('respondido_em', '>=', $start);
+                    }
+                },
+            ])
+            ->get();
+
+        $engagements = $patients
+            ->map(function (Paciente $paciente) {
+                $previstas = (int) $paciente->metas_previstas;
+                $respondidas = (int) $paciente->metas_respondidas;
+
+                if ($previstas <= 0) {
+                    return null;
+                }
+
+                return ($respondidas / $previstas) * 100;
+            })
+            ->filter(fn (?float $value) => $value !== null);
+
+        if ($engagements->isEmpty()) {
+            return 0.0;
+        }
+
+        return round($engagements->avg(), 1);
     }
 
     /**
