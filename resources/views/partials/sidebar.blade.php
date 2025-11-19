@@ -18,7 +18,7 @@
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5.975 5.975 0 0112 13.489m0 0a5.975 5.975 0 015.403 2.316m0 0A7.47 7.47 0 0115 21"></path></svg>
             <span class="mx-3">Pacientes</span>
         </a>
-        <a class="{{ $linkBase }} text-gray-500 hover:bg-gray-200 hover:text-gray-700" href="#">
+        <a class="{{ $linkBase }} {{ request()->routeIs('reports.*') ? 'text-gray-700 bg-gray-200' : 'text-gray-500 hover:bg-gray-200 hover:text-gray-700' }}" href="{{ route('reports.index') }}">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V7a2 2 0 012-2h10a2 2 0 012 2v10a2 2 0 01-2 2z"></path></svg>
             <span class="mx-3">Relatórios</span>
         </a>

@@ -7,6 +7,7 @@ use App\Http\Controllers\MetaController;
 use App\Http\Controllers\MetaResponseController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\PacienteReportController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\Webhooks\WhatsappWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +33,7 @@ Route::post('/webhooks/whatsapp', WhatsappWebhookController::class)->name('webho
 
 Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/relatorios', [ReportController::class, 'index'])->name('reports.index');
 
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
