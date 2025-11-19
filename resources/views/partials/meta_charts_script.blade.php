@@ -69,10 +69,35 @@
                 const axis = chartData.axis || {};
                 const colors = points.map((point) => point.color || '#4f46e5');
                 const scaleZones = Array.isArray(chartData.scaleZones) ? chartData.scaleZones : [];
+                const padAxis = axis.pad || {};
+                const pasAxis = axis.pas || {};
+                const fallbackMin = typeof axis.min === 'number' ? axis.min : 50;
+                const fallbackMax = typeof axis.max === 'number' ? axis.max : 220;
+
+                const resolveAxisValue = (value, fallback) =>
+                    typeof value === 'number' ? value : fallback;
 
                 const dataset = {
                     label: chartData.datasetLabel || 'Medições (PAS x PAD)',
-                    data: points.map((point) => ({ x: Number(point.x), y: Number(point.y) })),
+                    data: points.map((point) => {
+                        const padValue =
+                            typeof point.pad === 'number'
+                                ? point.pad
+                                : typeof point.x === 'number'
+                                    ? point.x
+                                    : null;
+                        const pasValue =
+                            typeof point.pas === 'number'
+                                ? point.pas
+                                : typeof point.y === 'number'
+                                    ? point.y
+                                    : null;
+
+                        return {
+                            x: typeof padValue === 'number' ? Number(padValue) : null,
+                            y: typeof pasValue === 'number' ? Number(pasValue) : null,
+                        };
+                    }),
                     showLine: false,
                     pointRadius: 6,
                     pointHoverRadius: 8,
@@ -104,16 +129,16 @@
                     },
                     scales: {
                         x: {
-                            title: { display: true, text: 'PAS (mmHg)' },
-                            min: axis.min ?? 50,
-                            max: axis.max ?? 220,
-                            ticks: { stepSize: 10 },
+                            title: { display: true, text: 'PAD (mmHg)' },
+                            min: resolveAxisValue(padAxis.min, resolveAxisValue(axis.padMin, fallbackMin)),
+                            max: resolveAxisValue(padAxis.max, resolveAxisValue(axis.padMax, 120)),
+                            ticks: { stepSize: 5 },
                             grid: { drawBorder: false },
                         },
                         y: {
-                            title: { display: true, text: 'PAD (mmHg)' },
-                            min: axis.min ?? 50,
-                            max: axis.max ?? 220,
+                            title: { display: true, text: 'PAS (mmHg)' },
+                            min: resolveAxisValue(pasAxis.min, resolveAxisValue(axis.pasMin, fallbackMin)),
+                            max: resolveAxisValue(pasAxis.max, resolveAxisValue(axis.pasMax, fallbackMax)),
                             ticks: { stepSize: 10 },
                             grid: { drawBorder: false },
                         },
