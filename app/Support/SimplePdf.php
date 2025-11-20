@@ -117,8 +117,7 @@ class SimplePdf
 
     private function encode(string $text): string
     {
-        $converted = iconv('UTF-8', 'Windows-1252//TRANSLIT', $text);
-        $converted = $converted !== false ? $converted : $text;
+        $converted = mb_convert_encoding($text, 'Windows-1252', 'UTF-8');
         $escaped = str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $converted);
 
         return $escaped;
