@@ -40,6 +40,8 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::resource('metas', MetaController::class)->except('show');
     Route::get('pacientes/{paciente:uuid}/dashboard', [PacienteController::class, 'dashboard'])
         ->name('pacientes.dashboard');
+    Route::post('pacientes/{paciente:uuid}/dashboard/exportar-pdf', [PacienteController::class, 'exportPdf'])
+        ->name('pacientes.dashboard.exportar-pdf');
     Route::post('pacientes/{paciente:uuid}/cancelar-metas', [PacienteController::class, 'cancelarMetas'])
         ->name('pacientes.cancelar-metas');
     Route::post('pacientes/{paciente:uuid}/enviar-acompanhamento', [PacienteController::class, 'enviarAcompanhamento'])

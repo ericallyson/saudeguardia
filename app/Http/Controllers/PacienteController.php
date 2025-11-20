@@ -73,6 +73,44 @@ class PacienteController extends Controller
         ]);
     }
 
+    public function exportPdf(Request $request, Paciente $paciente)
+    {
+        $this->ensurePacienteBelongsToUser($request, $paciente);
+
+        $validated = $request->validate([
+            'consideracoes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $paciente->load('metas');
+
+        $engajamento = $this->dashboardService->calcularEngajamento($paciente);
+        $andamento = $this->dashboardService->calcularAndamentoTratamento($paciente);
+
+        $reportUrl = URL::temporarySignedRoute(
+            'pacientes.relatorios.publico',
+            Carbon::now()->addDays(7),
+            ['paciente' => $paciente],
+        );
+
+        $fileName = sprintf(
+            'relatorio-%s-%s.pdf',
+            Str::slug($paciente->nome ?: 'paciente'),
+            Carbon::now()->format('YmdHis'),
+        );
+
+        $pdfContents = $this->reportPdfBuilder->build(
+            $paciente,
+            $engajamento,
+            $andamento,
+            $reportUrl,
+            $validated['consideracoes'] ?? null,
+        );
+
+        return response()->streamDownload(fn () => print $pdfContents, $fileName, [
+            'Content-Type' => 'application/pdf',
+        ]);
+    }
+
     /**
      * Show the form for creating a new patient.
      */
@@ -153,6 +191,10 @@ class PacienteController extends Controller
     {
         $this->ensurePacienteBelongsToUser($request, $paciente);
 
+        $validated = $request->validate([
+            'consideracoes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
         $numero = $paciente->whatsapp_numero ?: $paciente->telefone;
 
         if (! $numero) {
@@ -173,7 +215,6 @@ class PacienteController extends Controller
 
         $engajamento = $this->dashboardService->calcularEngajamento($paciente);
         $andamento = $this->dashboardService->calcularAndamentoTratamento($paciente);
-        $metasFuturas = $this->dashboardService->listarMetasFuturas($paciente)->take(10);
 
         $reportUrl = URL::temporarySignedRoute(
             'pacientes.relatorios.publico',
@@ -198,8 +239,8 @@ class PacienteController extends Controller
                 $paciente,
                 $engajamento,
                 $andamento,
-                $metasFuturas,
                 $reportUrl,
+                $validated['consideracoes'] ?? null,
             );
 
             $this->whatsappService->sendDocument(
