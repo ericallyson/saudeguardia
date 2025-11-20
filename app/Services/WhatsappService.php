@@ -37,7 +37,7 @@ class WhatsappService
             'token' => $token,
             'uuid' => $instanceUuid,
             'number' => $number,
-            'message' => trim($message),
+            'content' => trim($message),
         ];
 
         try {
