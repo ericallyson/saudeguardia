@@ -29,6 +29,10 @@ class WhatsappService
             throw new RuntimeException('Número de telefone inválido para envio via WhatsApp.');
         }
 
+        if (! str_starts_with($number, '55')) {
+            $number = '55' . $number;
+        }
+
         $sanitizedFileName = sprintf(
             '%s.pdf',
             Str::slug(pathinfo($fileName, PATHINFO_FILENAME) ?: 'relatorio'),
