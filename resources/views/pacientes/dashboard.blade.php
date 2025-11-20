@@ -235,8 +235,40 @@
 @include('partials.meta_charts_script', ['metaCharts' => $metaCharts, 'chartPrefix' => 'meta-chart'])
 
 @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-5KoopwS41HQvfQh+IdNv9blhAQiAisqYeA7wdhTfV7Qf6J31y2QFBfVX2XW8Q48dHnNwRGmyI5iqP1d3r4vBOw==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
     <script>
+        const html2PdfUrl = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        let html2PdfPromise;
+
+        function loadHtml2Pdf() {
+            if (typeof html2pdf !== 'undefined') {
+                return Promise.resolve(html2pdf);
+            }
+
+            if (! html2PdfPromise) {
+                html2PdfPromise = new Promise((resolve, reject) => {
+                    const existingScript = document.querySelector('script[data-html2pdf]');
+
+                    if (existingScript) {
+                        existingScript.addEventListener('load', () => resolve(html2pdf));
+                        existingScript.addEventListener('error', () => reject(new Error('Erro ao carregar html2pdf')));
+                        return;
+                    }
+
+                    const script = document.createElement('script');
+                    script.src = html2PdfUrl;
+                    script.defer = true;
+                    script.dataset.html2pdf = 'true';
+
+                    script.onload = () => resolve(html2pdf);
+                    script.onerror = () => reject(new Error('Erro ao carregar html2pdf'));
+
+                    document.head.appendChild(script);
+                });
+            }
+
+            return html2PdfPromise;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const buttons = document.querySelectorAll('.copy-link');
 
@@ -270,7 +302,10 @@
                 return;
             }
 
-            if (typeof html2pdf === 'undefined') {
+            try {
+                await loadHtml2Pdf();
+            } catch (error) {
+                console.error(error);
                 alert('Não foi possível carregar o exportador de PDF. Verifique sua conexão e tente novamente.');
                 return;
             }
