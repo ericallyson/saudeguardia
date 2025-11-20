@@ -89,10 +89,25 @@
                     return;
                 }
 
+                const consideracoesText = textarea.value.trim();
+
+                if (targetForm.dataset.exportClientSide === 'true') {
+                    const exportEvent = new CustomEvent('consideracoes:export', {
+                        detail: {
+                            form: targetForm,
+                            text: consideracoesText,
+                        },
+                    });
+
+                    document.dispatchEvent(exportEvent);
+                    closeModal();
+                    return;
+                }
+
                 const hiddenInput = targetForm.querySelector('input[name="consideracoes"]');
 
                 if (hiddenInput) {
-                    hiddenInput.value = textarea.value.trim();
+                    hiddenInput.value = consideracoesText;
                 }
 
                 targetForm.submit();
