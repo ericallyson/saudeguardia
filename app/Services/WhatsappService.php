@@ -13,6 +13,49 @@ use Throwable;
 
 class WhatsappService
 {
+    public function sendText(User $user, string $phoneNumber, string $message): void
+    {
+        $instanceUuid = trim((string) $user->whatsapp_instance_uuid);
+        $token = (string) config('services.whatsapp.token');
+        $url = (string) config('services.whatsapp.send_text_url');
+
+        if ($instanceUuid === '' || $token === '' || $url === '') {
+            throw new RuntimeException('Credenciais da API de WhatsApp não configuradas.');
+        }
+
+        $number = preg_replace('/\D+/', '', $phoneNumber);
+
+        if ($number === '') {
+            throw new RuntimeException('Número de telefone inválido para envio via WhatsApp.');
+        }
+
+        if (! str_starts_with($number, '55')) {
+            $number = '55' . $number;
+        }
+
+        $payload = [
+            'token' => $token,
+            'uuid' => $instanceUuid,
+            'number' => $number,
+            'message' => trim($message),
+        ];
+
+        try {
+            $response = Http::timeout(30)->asJson()->post($url, $payload);
+        } catch (Throwable $exception) {
+            throw new RuntimeException('Erro na comunicação com a API de WhatsApp: ' . $exception->getMessage(), 0, $exception);
+        }
+
+        if (! $response->successful()) {
+            Log::error('Falha ao enviar mensagem de texto via WhatsApp.', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+
+            throw new RuntimeException('A API de WhatsApp retornou uma resposta inválida.');
+        }
+    }
+
     public function sendDocument(User $user, string $phoneNumber, string $fileName, string $caption, string $pdfContents): void
     {
         $instanceUuid = trim((string) $user->whatsapp_instance_uuid);

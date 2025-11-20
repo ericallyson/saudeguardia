@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Paciente;
 use App\Support\SimplePdf;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class PatientReportPdfBuilder
 {
@@ -21,6 +22,7 @@ class PatientReportPdfBuilder
         array $engajamento,
         array $andamento,
         string $reportUrl,
+        Collection $metaCharts,
         ?string $consideracoes = null,
     ): string {
         $lines = [];
@@ -42,9 +44,44 @@ class PatientReportPdfBuilder
         $lines[] = sprintf('• Progresso estimado: %.2f%% concluído', (float) $andamento['percentual_passado']);
         $lines[] = '';
 
+        if ($metaCharts->isNotEmpty()) {
+            $lines[] = 'Gráficos das metas';
+
+            foreach ($metaCharts as $metaChart) {
+                $lines[] = sprintf('• %s (%s)', $metaChart['nome'], $metaChart['tipo']);
+                $chart = $metaChart['chart'] ?? [];
+                $values = $chart['values'] ?? [];
+                $labels = $chart['labels'] ?? [];
+
+                if (is_array($values) && is_array($labels) && count($values) === count($labels)) {
+                    $rendered = collect($values)
+                        ->zip($labels)
+                        ->map(function ($pair) {
+                            [$value, $label] = $pair;
+                            $cleanValue = $value === null ? '—' : (is_numeric($value) ? number_format((float) $value, 2, ',', '.') : (string) $value);
+
+                            return sprintf('%s: %s', $label, $cleanValue);
+                        })
+                        ->implode(' | ');
+
+                    if ($rendered !== '') {
+                        $lines[] = '  ' . $rendered;
+                    }
+                }
+
+                $lines[] = '';
+            }
+        }
+
         if ($consideracoes) {
             $lines[] = 'Considerações do médico';
             $lines[] = $consideracoes;
+            $lines[] = '';
+        }
+
+        if ($paciente->ultima_observacao) {
+            $lines[] = 'Observação registrada no último envio';
+            $lines[] = $paciente->ultima_observacao;
             $lines[] = '';
         }
 
