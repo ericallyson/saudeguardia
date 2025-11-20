@@ -85,6 +85,7 @@ class PacienteController extends Controller
 
         $engajamento = $this->dashboardService->calcularEngajamento($paciente);
         $andamento = $this->dashboardService->calcularAndamentoTratamento($paciente);
+        $metaCharts = $this->dashboardService->construirGraficosMetas($paciente);
 
         $reportUrl = URL::temporarySignedRoute(
             'pacientes.relatorios.publico',
@@ -103,6 +104,7 @@ class PacienteController extends Controller
             $engajamento,
             $andamento,
             $reportUrl,
+            $metaCharts,
             $validated['consideracoes'] ?? null,
         );
 
@@ -211,44 +213,31 @@ class PacienteController extends Controller
                 ->with('error', 'Conecte sua instância de WhatsApp nas configurações para enviar acompanhamentos.');
         }
 
-        $paciente->load('metas');
-
-        $engajamento = $this->dashboardService->calcularEngajamento($paciente);
-        $andamento = $this->dashboardService->calcularAndamentoTratamento($paciente);
-
         $reportUrl = URL::temporarySignedRoute(
             'pacientes.relatorios.publico',
             Carbon::now()->addDays(7),
             ['paciente' => $paciente],
         );
 
-        $fileName = sprintf(
-            'relatorio-%s-%s.pdf',
-            Str::slug($paciente->nome ?: 'paciente'),
-            Carbon::now()->format('YmdHis'),
-        );
+        $paciente->ultima_observacao = $validated['consideracoes'] ?? null;
+        $paciente->save();
 
-        $caption = sprintf(
-            'Relatório de acompanhamento de %s. Veja mais em: %s',
+        $mensagem = sprintf(
+            "Olá, %s! Segue seu acompanhamento atualizado. Você pode acessar todos os detalhes no link abaixo:%s%s",
             $paciente->nome,
+            PHP_EOL,
             $reportUrl,
         );
 
-        try {
-            $pdfContents = $this->reportPdfBuilder->build(
-                $paciente,
-                $engajamento,
-                $andamento,
-                $reportUrl,
-                $validated['consideracoes'] ?? null,
-            );
+        if (! empty($validated['consideracoes'])) {
+            $mensagem .= sprintf("%s%s", PHP_EOL . PHP_EOL . 'Observações do médico:', PHP_EOL . $validated['consideracoes']);
+        }
 
-            $this->whatsappService->sendDocument(
+        try {
+            $this->whatsappService->sendText(
                 $user,
                 $numero,
-                $fileName,
-                $caption,
-                $pdfContents,
+                $mensagem,
             );
         } catch (Throwable $exception) {
             Log::error('Erro ao enviar relatório de acompanhamento via WhatsApp.', [
