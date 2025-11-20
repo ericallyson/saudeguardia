@@ -12,7 +12,11 @@
     >
         <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-                <a href="{{ route('pacientes.index') }}" class="text-sm text-blue-600 hover:text-blue-800">&larr; Voltar para a listagem</a>
+                <a
+                    href="{{ route('pacientes.index') }}"
+                    class="text-sm text-blue-600 hover:text-blue-800"
+                    data-hide-on-export
+                >&larr; Voltar para a listagem</a>
                 <h1 class="mt-2 text-3xl font-bold text-gray-800">Dashboard do paciente</h1>
                 <p class="text-gray-500">Acompanhe a evolução das metas e o andamento do tratamento de {{ $paciente->nome }}.</p>
             </div>
@@ -31,6 +35,7 @@
                         class="rounded-md border border-indigo-200 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
                         data-open-consideracoes
                         data-target-form="exportar-relatorio-form"
+                        data-hide-on-export
                     >
                         Exportar PDF
                     </button>
@@ -39,6 +44,7 @@
                         class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                         data-open-consideracoes
                         data-target-form="enviar-relatorio-form"
+                        data-hide-on-export
                         @unless($canSend) disabled title="Cadastre um número de WhatsApp para enviar o acompanhamento." @endunless
                     >
                         Enviar acompanhamento para o cliente
@@ -199,7 +205,7 @@
             @endif
         </div>
 
-        <div class="mt-10 card p-6">
+        <div class="mt-10 card p-6" data-hide-on-export>
             <div class="mb-6 flex items-center justify-between">
                 <div>
                     <h2 class="text-xl font-semibold text-[#2d3a4d]">Próximas metas do paciente</h2>
@@ -235,8 +241,40 @@
 @include('partials.meta_charts_script', ['metaCharts' => $metaCharts, 'chartPrefix' => 'meta-chart'])
 
 @push('scripts')
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-5KoopwS41HQvfQh+IdNv9blhAQiAisqYeA7wdhTfV7Qf6J31y2QFBfVX2XW8Q48dHnNwRGmyI5iqP1d3r4vBOw==" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
     <script>
+        const html2PdfUrl = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
+        let html2PdfPromise;
+
+        function loadHtml2Pdf() {
+            if (typeof html2pdf !== 'undefined') {
+                return Promise.resolve(html2pdf);
+            }
+
+            if (! html2PdfPromise) {
+                html2PdfPromise = new Promise((resolve, reject) => {
+                    const existingScript = document.querySelector('script[data-html2pdf]');
+
+                    if (existingScript) {
+                        existingScript.addEventListener('load', () => resolve(html2pdf));
+                        existingScript.addEventListener('error', () => reject(new Error('Erro ao carregar html2pdf')));
+                        return;
+                    }
+
+                    const script = document.createElement('script');
+                    script.src = html2PdfUrl;
+                    script.defer = true;
+                    script.dataset.html2pdf = 'true';
+
+                    script.onload = () => resolve(html2pdf);
+                    script.onerror = () => reject(new Error('Erro ao carregar html2pdf'));
+
+                    document.head.appendChild(script);
+                });
+            }
+
+            return html2PdfPromise;
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const buttons = document.querySelectorAll('.copy-link');
 
@@ -270,7 +308,10 @@
                 return;
             }
 
-            if (typeof html2pdf === 'undefined') {
+            try {
+                await loadHtml2Pdf();
+            } catch (error) {
+                console.error(error);
                 alert('Não foi possível carregar o exportador de PDF. Verifique sua conexão e tente novamente.');
                 return;
             }
@@ -282,6 +323,34 @@
             }
 
             const clone = exportContent.cloneNode(true);
+
+            clone.querySelectorAll('[data-hide-on-export]').forEach((element) => element.remove());
+
+            document.querySelectorAll('#dashboard-export-content canvas[id]').forEach((canvas) => {
+                const clonedCanvas = clone.querySelector(`[id="${canvas.id}"]`);
+
+                if (! clonedCanvas || typeof canvas.toDataURL !== 'function') {
+                    return;
+                }
+
+                try {
+                    const image = document.createElement('img');
+                    image.src = canvas.toDataURL('image/png');
+                    image.alt = canvas.getAttribute('aria-label') || 'Gráfico da meta';
+                    image.style.width = '100%';
+                    image.style.height = 'auto';
+                    image.style.display = 'block';
+
+                    const canvasHeight = canvas.clientHeight || canvas.height;
+                    if (canvasHeight) {
+                        image.style.maxHeight = `${canvasHeight}px`;
+                    }
+
+                    clonedCanvas.replaceWith(image);
+                } catch (error) {
+                    console.error('Erro ao converter gráfico para imagem', error);
+                }
+            });
 
             if (text) {
                 const noteCard = document.createElement('div');
