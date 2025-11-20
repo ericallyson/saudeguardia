@@ -9,33 +9,39 @@ use Illuminate\Support\Collection;
 
 class PacienteDashboardService
 {
-    private const BLOOD_PRESSURE_LEVELS = [
-        'normal' => [
-            'label' => 'Pressão normal',
-            'description' => 'PAS < 120 e PAD < 80',
-            'color' => '#22c55e',
-        ],
-        'pre' => [
-            'label' => 'Pré-hipertenso',
-            'description' => 'PAS entre 120-139 e/ou PAD entre 80-89',
-            'color' => '#fb923c',
-        ],
-        'stage_1' => [
-            'label' => 'Hipertensão Estágio 1',
-            'description' => 'PAS 140-159 e/ou PAD 90-99',
-            'color' => '#f87171',
-        ],
-        'stage_2' => [
-            'label' => 'Hipertensão Estágio 2',
-            'description' => 'PAS 160-179 e/ou PAD 100-109',
-            'color' => '#ef4444',
-        ],
-        'stage_3' => [
-            'label' => 'Hipertensão Estágio 3',
-            'description' => 'PAS ≥ 180 e/ou PAD ≥ 110',
-            'color' => '#b91c1c',
-        ],
-    ];
+   private const BLOOD_PRESSURE_LEVELS = [
+    'normal' => [
+        'label' => 'Pressão normal',
+        'description' => 'PAS < 120 e PAD < 80',
+        // Verde bem claro e legível
+        'color' => '#16a34a', // green-600
+    ],
+    'pre' => [
+        'label' => 'Pré-hipertenso',
+        'description' => 'PAS entre 120-139 e/ou PAD entre 80-89',
+        // Amarelo mesmo (não laranja)
+        'color' => '#eab308', // yellow-500
+    ],
+    'stage_1' => [
+        'label' => 'Hipertensão Estágio 1',
+        'description' => 'PAS 140-159 e/ou PAD 90-99',
+        // Vermelho mais claro
+        'color' => '#f97316', // orange/red-500
+    ],
+    'stage_2' => [
+        'label' => 'Hipertensão Estágio 2',
+        'description' => 'PAS 160-179 e/ou PAD 100-109',
+        // Vermelho forte
+        'color' => '#ef4444', // red-500
+    ],
+    'stage_3' => [
+        'label' => 'Hipertensão Estágio 3',
+        'description' => 'PAS ≥ 180 e/ou PAD ≥ 110',
+        // Vermelho bem escuro (mais grave)
+        'color' => '#b91c1c', // red-700
+    ],
+];
+
 
     public function calcularEngajamento(Paciente $paciente): array
     {
@@ -357,64 +363,83 @@ class PacienteDashboardService
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function bloodPressureScaleZones(): array
-    {
-        return [
-            [
-                'label' => self::BLOOD_PRESSURE_LEVELS['normal']['label'],
-                'pas' => ['min' => 50, 'max' => 120],
-                'pad' => ['min' => 50, 'max' => 80],
-                'backgroundColor' => 'rgba(22, 163, 74, 0.28)',
-                'borderColor' => 'rgba(21, 128, 61, 0.85)',
-            ],
-            [
-                'label' => self::BLOOD_PRESSURE_LEVELS['pre']['label'],
-                'pas' => ['min' => 120, 'max' => 140],
-                'backgroundColor' => 'rgba(234, 179, 8, 0.28)',
-                'borderColor' => 'rgba(202, 138, 4, 0.9)',
-            ],
-            [
-                'label' => self::BLOOD_PRESSURE_LEVELS['pre']['label'],
-                'pad' => ['min' => 80, 'max' => 90],
-                'backgroundColor' => 'rgba(234, 179, 8, 0.28)',
-                'borderColor' => 'rgba(202, 138, 4, 0.9)',
-            ],
-            [
-                'label' => self::BLOOD_PRESSURE_LEVELS['stage_1']['label'],
-                'pas' => ['min' => 140, 'max' => 160],
-                'backgroundColor' => 'rgba(239, 68, 68, 0.24)',
-                'borderColor' => 'rgba(220, 38, 38, 0.82)',
-            ],
-            [
-                'label' => self::BLOOD_PRESSURE_LEVELS['stage_1']['label'],
-                'pad' => ['min' => 90, 'max' => 100],
-                'backgroundColor' => 'rgba(239, 68, 68, 0.24)',
-                'borderColor' => 'rgba(220, 38, 38, 0.82)',
-            ],
-            [
-                'label' => self::BLOOD_PRESSURE_LEVELS['stage_2']['label'],
-                'pas' => ['min' => 160, 'max' => 180],
-                'backgroundColor' => 'rgba(220, 38, 38, 0.28)',
-                'borderColor' => 'rgba(185, 28, 28, 0.9)',
-            ],
-            [
-                'label' => self::BLOOD_PRESSURE_LEVELS['stage_2']['label'],
-                'pad' => ['min' => 100, 'max' => 110],
-                'backgroundColor' => 'rgba(220, 38, 38, 0.28)',
-                'borderColor' => 'rgba(185, 28, 28, 0.9)',
-            ],
-            [
-                'label' => self::BLOOD_PRESSURE_LEVELS['stage_3']['label'],
-                'pas' => ['min' => 180, 'max' => 220],
-                'backgroundColor' => 'rgba(153, 27, 27, 0.3)',
-                'borderColor' => 'rgba(127, 29, 29, 0.95)',
-            ],
-            [
-                'label' => self::BLOOD_PRESSURE_LEVELS['stage_3']['label'],
-                'pad' => ['min' => 110, 'max' => 140],
-                'backgroundColor' => 'rgba(153, 27, 27, 0.3)',
-                'borderColor' => 'rgba(127, 29, 29, 0.95)',
-            ],
-        ];
-    }
+    /**
+ * @return array<int, array<string, mixed>>
+ */
+private function bloodPressureScaleZones(): array
+{
+    return [
+        // FAIXA VERDE — Pressão normal
+        [
+            'label' => self::BLOOD_PRESSURE_LEVELS['normal']['label'],
+            'pas' => ['min' => 50, 'max' => 120],
+            'pad' => ['min' => 50, 'max' => 80],
+            // Verde claro translúcido
+            'backgroundColor' => 'rgba(22, 163, 74, 0.18)',   // #16a34a
+            'borderColor'     => 'rgba(22, 163, 74, 0.85)',
+        ],
+
+        // FAIXA AMARELA — Pré-hipertenso (PAS)
+        [
+            'label' => self::BLOOD_PRESSURE_LEVELS['pre']['label'],
+            'pas' => ['min' => 120, 'max' => 140],
+            // Amarelo translúcido
+            'backgroundColor' => 'rgba(234, 179, 8, 0.20)',   // #eab308
+            'borderColor'     => 'rgba(202, 138, 4, 0.9)',
+        ],
+        // FAIXA AMARELA — Pré-hipertenso (PAD)
+        [
+            'label' => self::BLOOD_PRESSURE_LEVELS['pre']['label'],
+            'pad' => ['min' => 80, 'max' => 90],
+            'backgroundColor' => 'rgba(234, 179, 8, 0.20)',
+            'borderColor'     => 'rgba(202, 138, 4, 0.9)',
+        ],
+
+        // FAIXA VERMELHA CLARA — Estágio 1 (PAS)
+        [
+            'label' => self::BLOOD_PRESSURE_LEVELS['stage_1']['label'],
+            'pas' => ['min' => 140, 'max' => 160],
+            'backgroundColor' => 'rgba(248, 113, 113, 0.22)', // #f87171
+            'borderColor'     => 'rgba(239, 68, 68, 0.9)',
+        ],
+        // FAIXA VERMELHA CLARA — Estágio 1 (PAD)
+        [
+            'label' => self::BLOOD_PRESSURE_LEVELS['stage_1']['label'],
+            'pad' => ['min' => 90, 'max' => 100],
+            'backgroundColor' => 'rgba(248, 113, 113, 0.22)',
+            'borderColor'     => 'rgba(239, 68, 68, 0.9)',
+        ],
+
+        // FAIXA VERMELHA — Estágio 2 (PAS)
+        [
+            'label' => self::BLOOD_PRESSURE_LEVELS['stage_2']['label'],
+            'pas' => ['min' => 160, 'max' => 180],
+            'backgroundColor' => 'rgba(239, 68, 68, 0.24)',   // #ef4444
+            'borderColor'     => 'rgba(220, 38, 38, 0.95)',
+        ],
+        // FAIXA VERMELHA — Estágio 2 (PAD)
+        [
+            'label' => self::BLOOD_PRESSURE_LEVELS['stage_2']['label'],
+            'pad' => ['min' => 100, 'max' => 110],
+            'backgroundColor' => 'rgba(239, 68, 68, 0.24)',
+            'borderColor'     => 'rgba(220, 38, 38, 0.95)',
+        ],
+
+        // FAIXA VERMELHA ESCURA — Estágio 3 (PAS)
+        [
+            'label' => self::BLOOD_PRESSURE_LEVELS['stage_3']['label'],
+            'pas' => ['min' => 180, 'max' => 220],
+            'backgroundColor' => 'rgba(185, 28, 28, 0.26)',   // #b91c1c
+            'borderColor'     => 'rgba(127, 29, 29, 0.98)',
+        ],
+        // FAIXA VERMELHA ESCURA — Estágio 3 (PAD)
+        [
+            'label' => self::BLOOD_PRESSURE_LEVELS['stage_3']['label'],
+            'pad' => ['min' => 110, 'max' => 140],
+            'backgroundColor' => 'rgba(185, 28, 28, 0.26)',
+            'borderColor'     => 'rgba(127, 29, 29, 0.98)',
+        ],
+    ];
+}
+
 }
