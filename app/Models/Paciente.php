@@ -30,6 +30,7 @@ class Paciente extends Model
         'atividade_fisica',
         'whatsapp_numero',
         'whatsapp_frequencia',
+        'ultima_observacao',
         'user_id',
     ];
 
