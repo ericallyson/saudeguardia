@@ -88,15 +88,18 @@
                                         action="{{ route('pacientes.enviar-acompanhamento', $paciente) }}"
                                         method="POST"
                                         class="inline-flex"
-                                        onsubmit="return confirm('Deseja enviar o relatório de acompanhamento para {{ $paciente->nome }}?');"
+                                        id="enviar-acompanhamento-{{ $paciente->id }}"
                                     >
                                         @csrf
                                         @php
                                             $canSend = (bool) ($paciente->whatsapp_numero || $paciente->telefone);
                                         @endphp
+                                        <input type="hidden" name="consideracoes" value="">
                                         <button
-                                            type="submit"
+                                            type="button"
                                             class="inline-flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                            data-open-consideracoes
+                                            data-target-form="enviar-acompanhamento-{{ $paciente->id }}"
                                             @unless($canSend) disabled title="Cadastre um número de WhatsApp para enviar o acompanhamento." @endunless
                                         >
                                             <svg
@@ -137,4 +140,5 @@
             {{ $pacientes->links() }}
         </div>
     </div>
+    @include('partials.consideracoes_modal')
 @endsection

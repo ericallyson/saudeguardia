@@ -5,20 +5,52 @@
 @section('main')
     @php($metaTipos = \App\Models\Meta::TIPOS)
 
-    <div class="flex items-center justify-between mb-8">
+    <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
             <a href="{{ route('pacientes.index') }}" class="text-sm text-blue-600 hover:text-blue-800">&larr; Voltar para a listagem</a>
             <h1 class="mt-2 text-3xl font-bold text-gray-800">Dashboard do paciente</h1>
             <p class="text-gray-500">Acompanhe a evolução das metas e o andamento do tratamento de {{ $paciente->nome }}.</p>
         </div>
-        <div class="text-right">
-            <p class="text-sm text-gray-500">Plano</p>
-            <p class="text-lg font-semibold text-gray-800">{{ $paciente->plano ?? '—' }}</p>
-            @if ($paciente->data_inicio)
-                <p class="text-sm text-gray-500">Desde {{ $paciente->data_inicio->format('d/m/Y') }}</p>
-            @endif
+        <div class="flex w-full flex-col items-end gap-4 text-right lg:w-auto">
+            <div class="text-right">
+                <p class="text-sm text-gray-500">Plano</p>
+                <p class="text-lg font-semibold text-gray-800">{{ $paciente->plano ?? '—' }}</p>
+                @if ($paciente->data_inicio)
+                    <p class="text-sm text-gray-500">Desde {{ $paciente->data_inicio->format('d/m/Y') }}</p>
+                @endif
+            </div>
+            @php($canSend = (bool) ($paciente->whatsapp_numero || $paciente->telefone))
+            <div class="flex flex-wrap justify-end gap-2">
+                <button
+                    type="button"
+                    class="rounded-md border border-indigo-200 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
+                    data-open-consideracoes
+                    data-target-form="exportar-relatorio-form"
+                >
+                    Exportar PDF
+                </button>
+                <button
+                    type="button"
+                    class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    data-open-consideracoes
+                    data-target-form="enviar-relatorio-form"
+                    @unless($canSend) disabled title="Cadastre um número de WhatsApp para enviar o acompanhamento." @endunless
+                >
+                    Enviar acompanhamento para o cliente
+                </button>
+            </div>
         </div>
     </div>
+
+    <form id="exportar-relatorio-form" action="{{ route('pacientes.dashboard.exportar-pdf', $paciente) }}" method="POST" class="hidden">
+        @csrf
+        <input type="hidden" name="consideracoes" value="">
+    </form>
+
+    <form id="enviar-relatorio-form" action="{{ route('pacientes.enviar-acompanhamento', $paciente) }}" method="POST" class="hidden">
+        @csrf
+        <input type="hidden" name="consideracoes" value="">
+    </form>
 
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="card p-6">
@@ -184,6 +216,7 @@
             <p class="py-6 text-center text-sm text-gray-500">Não há metas futuras agendadas para este paciente.</p>
         @endforelse
     </div>
+    @include('partials.consideracoes_modal')
 @endsection
 
 @include('partials.meta_charts_script', ['metaCharts' => $metaCharts, 'chartPrefix' => 'meta-chart'])

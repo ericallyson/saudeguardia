@@ -2,11 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\MetaMessage;
 use App\Models\Paciente;
 use App\Support\SimplePdf;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 
 class PatientReportPdfBuilder
 {
@@ -17,14 +15,13 @@ class PatientReportPdfBuilder
     /**
      * @param array{total_interacoes:int, interacoes_concluidas:int, previstas_ate_hoje:int, percentual_total:float, percentual_previsto:float} $engajamento
      * @param array{inicio:?Carbon, fim:?Carbon, dias_totais:int, dias_passados:int, percentual_passado:float, percentual_futuro:float} $andamento
-     * @param Collection<int, MetaMessage> $metasFuturas
      */
     public function build(
         Paciente $paciente,
         array $engajamento,
         array $andamento,
-        Collection $metasFuturas,
         string $reportUrl,
+        ?string $consideracoes = null,
     ): string {
         $lines = [];
         $lines[] = 'Paciente: ' . $paciente->nome;
@@ -45,24 +42,10 @@ class PatientReportPdfBuilder
         $lines[] = sprintf('• Progresso estimado: %.2f%% concluído', (float) $andamento['percentual_passado']);
         $lines[] = '';
 
-        $lines[] = 'Próximos acompanhamentos agendados';
-
-        if ($metasFuturas->isEmpty()) {
-            $lines[] = '• Não há acompanhamentos futuros agendados.';
-        } else {
-            $metasFuturas
-                ->sortBy('data_envio')
-                ->take(10)
-                ->values()
-                ->each(function (MetaMessage $metaMessage, int $index) use (&$lines): void {
-                    $lines[] = sprintf(
-                        '%d. %s às %s — %s',
-                        $index + 1,
-                        $metaMessage->data_envio->format('d/m/Y'),
-                        $metaMessage->data_envio->format('H:i'),
-                        $metaMessage->meta?->nome ?? 'Meta sem nome',
-                    );
-                });
+        if ($consideracoes) {
+            $lines[] = 'Considerações do médico';
+            $lines[] = $consideracoes;
+            $lines[] = '';
         }
 
         $lines[] = '';
