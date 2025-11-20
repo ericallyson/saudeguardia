@@ -5,6 +5,9 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
@@ -14,7 +17,7 @@ class WhatsappService
     {
         $instanceUuid = trim((string) $user->whatsapp_instance_uuid);
         $token = (string) config('services.whatsapp.token');
-        $url = (string) config('services.whatsapp.send_document_url');
+        $url = (string) config('services.whatsapp.send_media_url');
 
         if ($instanceUuid === '' || $token === '' || $url === '') {
             throw new RuntimeException('Credenciais da API de WhatsApp não configuradas.');
@@ -26,14 +29,24 @@ class WhatsappService
             throw new RuntimeException('Número de telefone inválido para envio via WhatsApp.');
         }
 
+        $sanitizedFileName = sprintf(
+            '%s.pdf',
+            Str::slug(pathinfo($fileName, PATHINFO_FILENAME) ?: 'relatorio'),
+        );
+
+        $storagePath = 'whatsapp/' . $sanitizedFileName;
+
+        Storage::disk('public')->put($storagePath, $pdfContents);
+
+        $mediaUrl = URL::to(Storage::disk('public')->url($storagePath));
+
         $payload = [
             'token' => $token,
             'uuid' => $instanceUuid,
             'number' => $number,
-            'fileName' => $fileName,
+            'media' => $mediaUrl,
+            'mediatype' => 'document',
             'caption' => $caption,
-            'mimetype' => 'application/pdf',
-            'document' => base64_encode($pdfContents),
         ];
 
         try {
