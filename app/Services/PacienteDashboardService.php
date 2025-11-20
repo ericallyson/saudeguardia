@@ -370,14 +370,14 @@ class PacienteDashboardService
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['pre']['label'],
                 'pas' => ['min' => 120, 'max' => 140],
-                'backgroundColor' => 'rgba(249, 115, 22, 0.25)',
-                'borderColor' => 'rgba(234, 88, 12, 0.8)',
+                'backgroundColor' => 'rgba(234, 179, 8, 0.28)',
+                'borderColor' => 'rgba(202, 138, 4, 0.9)',
             ],
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['pre']['label'],
                 'pad' => ['min' => 80, 'max' => 90],
-                'backgroundColor' => 'rgba(249, 115, 22, 0.25)',
-                'borderColor' => 'rgba(234, 88, 12, 0.8)',
+                'backgroundColor' => 'rgba(234, 179, 8, 0.28)',
+                'borderColor' => 'rgba(202, 138, 4, 0.9)',
             ],
             [
                 'label' => self::BLOOD_PRESSURE_LEVELS['stage_1']['label'],
