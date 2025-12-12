@@ -8,6 +8,7 @@ use App\Services\MetaMessageService;
 use App\Services\PacienteDashboardService;
 use App\Services\PatientReportPdfBuilder;
 use App\Services\WhatsappService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -184,7 +185,13 @@ class PacienteController extends Controller
     {
         $this->ensurePacienteBelongsToUser($request, $paciente);
 
-        $paciente->delete();
+        DB::transaction(function () use ($paciente): void {
+            $paciente->metaRespostas()->delete();
+            $paciente->metaMessages()->delete();
+            $paciente->metas()->detach();
+
+            $paciente->delete();
+        });
 
         return redirect()->route('pacientes.index')->with('success', 'Paciente removido com sucesso.');
     }
