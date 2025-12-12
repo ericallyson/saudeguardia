@@ -179,7 +179,11 @@
 
                 const ctx = canvas.getContext('2d');
                 const chartData = meta.chart;
-                const chartType = chartData.type || 'bar';
+                const originalChartType = chartData.type || 'bar';
+                const chartType =
+                    originalChartType === 'bar' && chartPrefix === 'meta-chart'
+                        ? 'line'
+                        : originalChartType;
 
                 if (chartType === 'blood_pressure') {
                     renderBloodPressureChart(ctx, chartData);
@@ -188,12 +192,25 @@
                 }
 
                 const isBarChart = chartType === 'bar';
+                const isBinaryLineChart = chartType === 'line' && originalChartType === 'bar';
                 const dataset = {
                     label: chartData.datasetLabel || '',
                     data: chartData.values || [],
                 };
 
-                if (isBarChart) {
+                if (isBinaryLineChart) {
+                    const colors = chartData.colors || '#4f46e5';
+
+                    dataset.borderColor = '#4f46e5';
+                    dataset.backgroundColor = 'rgba(99, 102, 241, 0.12)';
+                    dataset.fill = false;
+                    dataset.tension = 0.35;
+                    dataset.pointRadius = 5;
+                    dataset.pointBackgroundColor = colors;
+                    dataset.pointBorderColor = colors;
+                    dataset.pointHoverRadius = 7;
+                    dataset.spanGaps = true;
+                } else if (isBarChart) {
                     dataset.backgroundColor = chartData.colors || '#6366f1';
                     dataset.borderRadius = 12;
                     dataset.maxBarThickness = 28;
@@ -236,7 +253,7 @@
                     return fullLabels[index] || '';
                 };
 
-                if (isBarChart) {
+                if (isBarChart || isBinaryLineChart) {
                     options.scales.y = {
                         beginAtZero: true,
                         min: 0,
@@ -250,9 +267,8 @@
                         },
                     };
 
-                    options.plugins.tooltip.callbacks.label = (context) => {
-                        return context.parsed.y === 1 ? 'Preencheu' : 'Não preencheu';
-                    };
+                    options.plugins.tooltip.callbacks.label = (context) =>
+                        context.parsed.y === 1 ? 'Preencheu' : 'Não preencheu';
                 } else {
                     options.scales.y = {
                         beginAtZero: false,
