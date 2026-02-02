@@ -24,7 +24,7 @@
 @elseif ($tipo === 'integer')
     <input type="number" name="valor" id="valor" value="{{ $valorAnterior }}" step="0.01" lang="pt-BR" inputmode="decimal" class="w-full rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-4 py-3" required>
 @elseif ($tipo === 'blood_pressure')
-    @php($valoresPressao = range(50, 220, 5))
+    @php($valoresPressao = range(50, 220, 1))
     <div class="grid gap-4 md:grid-cols-2">
         <div>
             <label for="valor_pas" class="block text-sm font-medium text-slate-700">PAS (pressão sistólica)</label>
@@ -45,7 +45,7 @@
             </select>
         </div>
     </div>
-    <p class="mt-2 text-sm text-slate-500">Escolha valores entre 50 e 220 mmHg (incrementos de 5). Exemplo: 120 x 80.</p>
+    <p class="mt-2 text-sm text-slate-500">Escolha valores entre 50 e 220 mmHg (incrementos de 1). Exemplo: 120 x 80.</p>
 @elseif ($tipo === 'scale')
     <select name="valor" id="valor" class="w-full rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-4 py-3" required>
         <option value="">Selecione</option>
