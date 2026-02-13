@@ -81,12 +81,9 @@
     >
 
 @elseif ($tipo === 'blood_pressure')
-<<<<<<< HEAD
-    @php($valoresPressao = range(50, 220, 5))
 
-=======
     @php($valoresPressao = range(50, 220, 1))
->>>>>>> 94672941e667d69a5311f640c4410bd3e146d120
+
     <div class="grid gap-4 md:grid-cols-2">
         <div class="space-y-1.5">
             <label for="valor_pas" class="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">

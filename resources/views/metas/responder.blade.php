@@ -62,7 +62,8 @@
             <form method="POST" action="{{ route('metas.responder.store', $metaMessage->token) }}" class="space-y-6">
                 @csrf
                 <div class="space-y-2">
-                    @php($descricaoMeta = filled($meta->descricao) ? preg_replace('/(<<<<<<<\s*HEAD|=======|>>>>>>>\s*[a-f0-9]+)/i', '', $meta->descricao) : null)
+                  @php($descricaoMeta = $meta->descricao)
+
                     <label @if ($meta->tipo !== 'blood_pressure') for="valor" @endif class="block text-sm font-medium text-slate-700">
                         {{ filled(trim((string) $descricaoMeta)) ? trim((string) $descricaoMeta) : 'Como você está indo com esta meta?' }}
                     </label>
