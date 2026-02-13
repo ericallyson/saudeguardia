@@ -117,9 +117,13 @@ class PacienteController extends Controller
     /**
      * Show the form for creating a new patient.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
         $metas = Meta::query()
+            ->where(function ($query) use ($request): void {
+                $query->where('user_id', $request->user()->id)
+                    ->orWhereNull('user_id');
+            })
             ->orderBy('nome')
             ->get(['id', 'nome']);
 
@@ -153,6 +157,10 @@ class PacienteController extends Controller
 
         $paciente->load('metas');
         $metas = Meta::query()
+            ->where(function ($query) use ($request): void {
+                $query->where('user_id', $request->user()->id)
+                    ->orWhereNull('user_id');
+            })
             ->orderBy('nome')
             ->get(['id', 'nome']);
 
@@ -296,7 +304,14 @@ class PacienteController extends Controller
             return [];
         }
 
-        $metasDisponiveis = Meta::pluck('id')->map(fn ($id) => (int) $id)->all();
+        $metasDisponiveis = Meta::query()
+            ->where(function ($query) use ($request): void {
+                $query->where('user_id', $request->user()->id)
+                    ->orWhereNull('user_id');
+            })
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
         $diasValidos = array_keys(self::DIAS_SEMANA);
 
         $metasValidadas = [];
