@@ -81,8 +81,12 @@
     >
 
 @elseif ($tipo === 'blood_pressure')
+<<<<<<< HEAD
     @php($valoresPressao = range(50, 220, 5))
 
+=======
+    @php($valoresPressao = range(50, 220, 1))
+>>>>>>> 94672941e667d69a5311f640c4410bd3e146d120
     <div class="grid gap-4 md:grid-cols-2">
         <div class="space-y-1.5">
             <label for="valor_pas" class="block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -158,7 +162,18 @@
             </select>
         </div>
     </div>
+<<<<<<< HEAD
 
+=======
+    <p class="mt-2 text-sm text-slate-500">Escolha valores entre 50 e 220 mmHg (incrementos de 1). Exemplo: 120 x 80.</p>
+@elseif ($tipo === 'scale')
+    <select name="valor" id="valor" class="w-full rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-indigo-500 px-4 py-3" required>
+        <option value="">Selecione</option>
+        @for ($i = 1; $i <= 5; $i++)
+            <option value="{{ $i }}" {{ (string) $valorAnterior === (string) $i ? 'selected' : '' }}>{{ $i }}</option>
+        @endfor
+    </select>
+>>>>>>> 94672941e667d69a5311f640c4410bd3e146d120
 @else
     {{-- Texto livre --}}
     <div class="space-y-1.5">
