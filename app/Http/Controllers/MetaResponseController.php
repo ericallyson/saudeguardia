@@ -119,7 +119,7 @@ class MetaResponseController extends Controller
      */
     private function bloodPressureRules(): array
     {
-        $opcoes = range(50, 220, 5);
+        $opcoes = range(50, 220, 1);
 
         return [
             'valor_pas' => ['required', 'integer', Rule::in($opcoes)],

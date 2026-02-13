@@ -20,7 +20,13 @@ class MetaController extends Controller
      */
     public function index(): View
     {
-        $metas = Meta::latest()->paginate(10);
+        $metas = Meta::query()
+            ->where(function ($query): void {
+                $query->where('user_id', auth()->id())
+                    ->orWhereNull('user_id');
+            })
+            ->latest()
+            ->paginate(10);
 
         return view('metas.index', compact('metas'));
     }
@@ -42,6 +48,7 @@ class MetaController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validateMeta($request);
+        $data['user_id'] = $request->user()->id;
 
         Meta::create($data);
 
@@ -53,6 +60,8 @@ class MetaController extends Controller
      */
     public function edit(Meta $meta): View
     {
+        $this->ensureMetaVisibleToUser($meta);
+
         $tipos = Meta::TIPOS;
         $periodicidades = Meta::PERIODICIDADES;
 
@@ -64,6 +73,8 @@ class MetaController extends Controller
      */
     public function update(Request $request, Meta $meta): RedirectResponse
     {
+        $this->ensureMetaVisibleToUser($meta);
+
         $data = $this->validateMeta($request);
 
         $meta->update($data);
@@ -78,6 +89,8 @@ class MetaController extends Controller
      */
     public function destroy(Meta $meta): RedirectResponse
     {
+        $this->ensureMetaVisibleToUser($meta);
+
         $meta->delete();
 
         return redirect()->route('metas.index')->with('success', 'Meta removida com sucesso.');
@@ -94,5 +107,12 @@ class MetaController extends Controller
             'tipo' => ['required', 'in:' . implode(',', array_keys(Meta::TIPOS))],
             'periodicidade_padrao' => ['required', 'in:' . implode(',', array_keys(Meta::PERIODICIDADES))],
         ]);
+    }
+
+    private function ensureMetaVisibleToUser(Meta $meta): void
+    {
+        if ($meta->user_id !== null && (int) $meta->user_id !== (int) auth()->id()) {
+            abort(404);
+        }
     }
 }
