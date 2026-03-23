@@ -211,11 +211,13 @@ class PacienteDashboardService
 
         $possuiDados = $respostasPorDia->isNotEmpty();
         $ehNumerica = in_array($meta->tipo, ['integer', 'scale'], true);
+        $ehBoolean = $meta->tipo === 'boolean';
 
         $labels = [];
         $labelsCompletos = [];
         $valores = [];
         $cores = [];
+        $calendarEntries = [];
 
         for ($dia = $inicio->copy(); $dia->lte($agora); $dia->addDay()) {
             $chaveDia = $dia->format('Y-m-d');
@@ -227,11 +229,31 @@ class PacienteDashboardService
                     ? (float) $respostasPorDia->get($chaveDia)->sortBy('respondido_em')->last()->valor
                     : null;
                 $valores[] = $valorDia;
-            } else {
-                $preencheu = $respostasPorDia->has($chaveDia);
-                $valores[] = $preencheu ? 1 : 0;
-                $cores[] = $preencheu ? '#34d399' : '#f87171';
+
+                continue;
             }
+
+            if ($ehBoolean) {
+                $status = 'sem-dados';
+
+                if ($respostasPorDia->has($chaveDia)) {
+                    $valorResposta = strtolower((string) $respostasPorDia->get($chaveDia)->sortBy('respondido_em')->last()->valor);
+                    $status = $valorResposta === 'sim' ? 'sim' : ($valorResposta === 'nao' ? 'nao' : 'sem-dados');
+                }
+
+                $calendarEntries[] = [
+                    'date' => $chaveDia,
+                    'dayLabel' => $dia->format('j'),
+                    'status' => $status,
+                    'fullLabel' => $dia->format('d/m/Y'),
+                ];
+
+                continue;
+            }
+
+            $preencheu = $respostasPorDia->has($chaveDia);
+            $valores[] = $preencheu ? 1 : 0;
+            $cores[] = $preencheu ? '#34d399' : '#f87171';
         }
 
         return [
@@ -239,13 +261,18 @@ class PacienteDashboardService
             'nome' => $meta->nome,
             'tipo' => $meta->tipo,
             'has_data' => $possuiDados,
-            'legend' => null,
+            'legend' => $ehBoolean ? [
+                ['label' => 'Meta cumprida (Sim)', 'color' => '#16a34a'],
+                ['label' => 'Meta não cumprida (Não)', 'color' => '#ef4444'],
+                ['label' => 'Sem dados', 'color' => '#d1d5db'],
+            ] : null,
             'chart' => array_filter([
-                'type' => $ehNumerica ? 'line' : 'bar',
+                'type' => $ehNumerica ? 'line' : ($ehBoolean ? 'calendar' : 'bar'),
                 'labels' => $labels,
                 'fullLabels' => $labelsCompletos,
                 'values' => $valores,
                 'colors' => $ehNumerica ? null : $cores,
+                'entries' => $ehBoolean ? $calendarEntries : null,
                 'datasetLabel' => $ehNumerica ? 'Valor informado' : 'Preenchimento diário',
             ]),
         ];
