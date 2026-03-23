@@ -176,9 +176,13 @@
                                 </div>
                             </div>
 
-                            <div class="mt-4 h-64">
-                                <canvas id="meta-chart-{{ $metaChart['meta_id'] }}"></canvas>
-                            </div>
+                            @if ($metaChart['tipo'] === 'boolean')
+                                <div id="meta-chart-{{ $metaChart['meta_id'] }}" class="mt-4 meta-calendar-host"></div>
+                            @else
+                                <div class="mt-4 h-64">
+                                    <canvas id="meta-chart-{{ $metaChart['meta_id'] }}"></canvas>
+                                </div>
+                            @endif
 
                             @if (! empty($metaChart['legend']))
                                 <div class="mt-4 space-y-3">

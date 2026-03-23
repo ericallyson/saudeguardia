@@ -180,9 +180,13 @@
                                 <span class="pill">Com legenda</span>
                             @endif
                         </div>
-                        <div style="margin-top: 12px; height: 220px;">
-                            <canvas id="report-chart-{{ $metaChart['meta_id'] }}"></canvas>
-                        </div>
+                        @if ($metaChart['tipo'] === 'boolean')
+                            <div id="report-chart-{{ $metaChart['meta_id'] }}" class="meta-calendar-host" style="margin-top: 12px;"></div>
+                        @else
+                            <div style="margin-top: 12px; height: 220px;">
+                                <canvas id="report-chart-{{ $metaChart['meta_id'] }}"></canvas>
+                            </div>
+                        @endif
                         @if (! empty($metaChart['legend']))
                             <div style="margin-top: 10px; display: grid; gap: 8px;">
                                 @foreach ($metaChart['legend'] as $legend)
